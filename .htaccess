@@ -1,0 +1,68 @@
+# 若无法进行正常操作 部分主机可能需要将下面一行最前面的注释符号删除
+# RewriteBase /
+
+IndexIgnore *
+Options -Indexes
+Options +FollowSymlinks
+
+ServerSignature Off
+Options All -Indexes
+AddDefaultCharset UTF-8
+AddCharset UTF-8 .js .css
+
+# URL rewriting
+RewriteEngine on
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
+
+<IfModule mod_mime.c>
+    AddType text/css .css
+    AddType text/javascript .js
+    AddType text/html .html .htm
+    AddType image/bmp .bmp
+    AddType image/gif .gif
+    AddType application/x-gzip .gz .gzip
+    AddType image/x-icon .ico
+    AddType image/jpeg .jpg .jpeg .jpe
+    AddType image/png .png
+</IfModule>
+<Ifmodule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault A3600
+    ExpiresByType text/css A604800
+    ExpiresByType text/javascript A604800
+    ExpiresByType text/html A3600
+    ExpiresByType image/bmp A31536000
+    ExpiresByType image/gif A31536000
+    ExpiresByType image/x-icon A31536000
+    ExpiresByType image/jpeg A31536000
+    ExpiresByType image/png A31536000
+</Ifmodule>
+<IfModule mod_deflate.c>
+    <IfModule mod_setenvif.c>
+        BrowserMatch ^Mozilla/4 gzip-only-text/html
+        BrowserMatch ^Mozilla/4\.0[678] no-gzip
+        BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+        BrowserMatch \bMSI[E] !no-gzip !gzip-only-text/html
+    </IfModule>
+    <IfModule mod_headers.c>
+        Header append Vary User-Agent env=!dont-vary
+    </IfModule>
+    AddOutputFilterByType DEFLATE text/css text/javascript text/html text/richtext image/svg+xml text/plain text/xsd text/xsl text/xml image/x-icon application/x-httpd-php
+    AddOutputFilter DEFLATE html htm xml css js
+</IfModule>
+<FilesMatch "\.(js|css)$">
+    <IfModule mod_headers.c>
+        Header set Pragma "public"
+        Header set Cache-Control "max-age=604800, public, must-revalidate, proxy-revalidate"
+        Header append Vary Accept-Encoding
+    </IfModule>
+</FilesMatch>
+<FilesMatch "\.(bmp|ico|jpg|jpeg|jpe|png)$">
+    <IfModule mod_headers.c>
+        Header set Pragma "public"
+        Header set Cache-Control "max-age=31536000, public, must-revalidate, proxy-revalidate"
+    </IfModule>
+</FilesMatch>
+    FileETag None
