@@ -145,7 +145,7 @@ $sql = sprintf("SELECT * FROM user WHERE username='%s' AND password=MD5('%s') LI
       $username = strtolower($GLOBALS['user']['username']);
       $token = glob(CACHE_FLODER.$username.'.*');
       if(!empty($token)) {
-        $str = file_get_contents($token[0]);
+        $str = @file_get_contents($token[0]);
         $user = json_decode($str);
         if ($user && md5($GLOBALS['user']['password']) == $user->password) {
           $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;
@@ -153,7 +153,7 @@ $sql = sprintf("SELECT * FROM user WHERE username='%s' AND password=MD5('%s') LI
         theme('error', '<p>Invalid username or password.</p>');
         }
       } else {
-        theme('error', '<p>Invalid username or password.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
+        theme('error', '<p>No record.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
       }
     }
   _user_save_cookie($_POST['stay-logged-in'] == 'yes');
