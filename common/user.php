@@ -130,10 +130,10 @@ function user_is_authenticated() {
                         $GLOBALS['user']['type'] = 'oauth';
 
     if (ACCESS_USERS == 'MYSQL') {
-                        mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD);
-                        mysql_select_db(MYSQL_DB);
+                        @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
+                        @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
 $sql = sprintf("SELECT * FROM user WHERE username='%s' AND password=MD5('%s') LIMIT 1", mysql_escape_string($GLOBALS['user']['username']), mysql_escape_string($GLOBALS['user']['password']));
-                        $rs = mysql_query($sql);
+                        $rs = @mysql_query($sql) || theme('error', '<p>Error failed to find your OAuth Information into your MySQL Database.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
                         if ($rs && $user = mysql_fetch_object($rs)) {
                                 $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;
                         } else {
@@ -145,7 +145,7 @@ $sql = sprintf("SELECT * FROM user WHERE username='%s' AND password=MD5('%s') LI
       $username = strtolower($GLOBALS['user']['username']);
       $token = glob(CACHE_FLODER.$username.'.*');
       if(!empty($token)) {
-        $str = @file_get_contents($token[0]);
+        $str = @file_get_contents($token[0]) || theme('error', '<p>Error failed to read access_token file.</p><p>Please check if you have read permission to cache directory.</p>');
         $user = json_decode($str);
         if ($user && md5($GLOBALS['user']['password']) == $user->password) {
           $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;

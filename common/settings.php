@@ -131,10 +131,10 @@ function settings_page($args) {
                 if (ACCESS_USERS == 'MYSQL' && $newpass = $_POST['newpassword']) {
                         user_is_authenticated();
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
-                        mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD);
-                        mysql_select_db(MYSQL_DB);
+                        @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
+                        @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
                         $sql = sprintf("REPLACE INTO user (username, oauth_key, oauth_secret, password) VALUES ('%s', '%s', '%s', MD5('%s'))",  mysql_escape_string(user_current_username()), mysql_escape_string($key), mysql_escape_string($secret), mysql_escape_string($newpass));
-                        mysql_query($sql);
+                        @mysql_query($sql) || theme('error', '<p>Error failed to save your OAuth Information into your MySQL Database.</p><p>Please check your MySQL Database.</p>');
                 }
 
                 // Save a user's oauth details to a file
@@ -156,8 +156,8 @@ function settings_page($args) {
                         } else {
                             $str = CACHE_FLODER.$username.'.'.$suffix;
                         }
-                        if(file_put_contents($str,json_encode($user)) === FALSE) {
-                            theme('error', '<p>Error failed to write access_token file.Please check if you have write permission to cache directory</p>');
+                        if(@file_put_contents($str,json_encode($user)) === FALSE) {
+                            theme('error', '<p>Error failed to write access_token file.</p><p>Please check if you have write permission to cache directory.</p>');
                         }
                 }
 
