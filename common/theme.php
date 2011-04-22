@@ -228,7 +228,8 @@ function theme_css() {
   .texts,.texts a{color:#{$c->small};font-size:small;}
   textarea{width:90%; max-width: 400px;overflow-x:hidden;}
   .translate{padding:5px;margin:15px;border:thin solid;}
-  input#query{width:100%; max-width: 300px;}
+  input#query{width:100%;max-width:300px;}
+  .about{margin:0.5em;padding:0.1em 1em;}
 </style>";
   return $t;
 }
