@@ -143,15 +143,11 @@ menu_register(array(
   ),
 ));
 
-function utf8_strlen($string = null) {
-preg_match_all("/./us", $string, $match);
-return count($match[0]);
-}
-
 // Patch in multibyte support
+/*
 if (!function_exists('mb_substr')) {
     function mb_substr($str, $start, $len = '', $encoding="UTF-8"){
-    $limit = utf8_strlen($str);
+    $limit = strlen($str);
 
     for ($s = 0; $start > 0;--$start) {// found the real start
       if ($s >= $limit)
@@ -187,6 +183,46 @@ if (!function_exists('mb_substr')) {
     return substr($str, $s, $e - $s);
     }
 }
+*/
+
+function sysSubStr($String,$Length,$Append = false) {
+        if (function_exists('mb_substr') ? mb_strlen($String,'UTF-8') <= $Length : strlen(utf8_decode($String)) <= $Length) {
+            return $String;
+        }
+        else
+        {
+            $I = 0;
+            $Count = 0;
+
+            while ($Count < $Length)
+            {
+                $StringTMP = substr($String,$I,1);
+                if ( ord($StringTMP) >=224 )
+                {
+                    $StringTMP = substr($String,$I,3);
+                    $I = $I + 3;
+                }
+                elseif( ord($StringTMP) >=192 )
+                {
+                    $StringTMP = substr($String,$I,2);
+                    $I = $I + 2;
+                }
+                else
+                {
+                    $I = $I + 1;
+                }
+                $Count ++;
+                $StringLast[] = $StringTMP;
+            }
+            if($Append)
+                array_pop($StringLast);
+            $StringLast = implode("",$StringLast);
+            if($Append && $String != $StringLast)
+                $StringLast .= urldecode("%E2%80%A6"); //utf-8 code of "..." as a character
+            return $StringLast;
+        }
+}
+
 
 function long_url($shortURL){
     $url = "http://api.longurl.org/v2/expand?format=json&url=" . $shortURL;
@@ -963,14 +999,12 @@ function twitter_update() {
   twitter_ensure_post_action();
   $status = twitter_url_shorten(stripslashes(trim($_POST['status'])));
   if ($status) {
-  $status = setting_fetch('fixedtagspre')." ".$status." ".setting_fetch('fixedtagspost');
-  if (function_exists('mb_substr') && function_exists('mb_strlen')) {
-  if (mb_strlen($status,'utf-8') > 140)
-  $status = mb_substr($status, 0, 137, 'utf-8')."...";
-  } elseif (function_exists('mb_substr') && !function_exists('mb_strlen')) {
-    if (utf8_strlen($status) > 140)
-  $status = mb_substr($status, 0, 137, 'utf-8')."...";
-  }
+    $status = str_replace(array("\r\n", "\r"), "\n", $status);
+    $fixedtagspre = setting_fetch('fixedtagspre');
+    $fixedtagspost = setting_fetch('fixedtagspost');
+    empty($fixedtagspre) || $status = $fixedtagspre." ".$status;
+    empty($fixedtagspost) || $status .= " ".$fixedtagspost;
+    $status = sysSubStr($status,140,true);
     $request = API_URL.'statuses/update.json';
     $post_data = array('source' => 'dabr', 'status' => $status);
     $in_reply_to_id = (string) $_POST['in_reply_to_id'];
