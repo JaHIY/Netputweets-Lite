@@ -246,7 +246,7 @@ function user_login() {
 }
 
 function theme_login() {
-        $content = '<p><span class="textb">[1]<a href="oauth">Sign In with Twitter/OAuth</a></span>(from K-DTC)</p>
+        $content = '<p><span class="textb">[1]<a href="oauth">Sign In with Twitter/OAuth</a></span> (from K-DTC)</p>
 <p>Twitter no longer allow you to log in directly with a username and password so we can\'t show the standard login form. There\'s some more information on the <a href="http://blog.dabr.co.uk/">Dabr blog</a>.</p>';
 
         if (ACCESS_USERS == 'MYSQL' || ACCESS_USERS == 'FILE') $content .= '<p class="textb">[2]No access to Twitter.com? <a href="login">Sign in with your Dabr account</a></p>';
