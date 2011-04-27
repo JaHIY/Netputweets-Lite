@@ -619,28 +619,6 @@ function twitter_fetch($url) {
   return $response;
 }
 
-class Dabr_Autolink extends Twitter_Autolink {
-  function replacementURLs($matches) {
-    $replacement  = $matches[2];
-    $url = $matches[3];
-    if (!preg_match("#^https{0,1}://#i", $url)) {
-      $url = "http://{$url}";
-    }
-    if (setting_fetch('gwt') == 'on') {
-      $encoded = urlencode($url);
-      if (setting_fetch('linktrans') == 'yes') {
-      return "<a href='http://google.com/gwt/n?u={$encoded}' rel='external noreferrer'>[link]</a>";
-  } else {
-      $replacement .= "<a href='http://google.com/gwt/n?u={$encoded}' rel='external noreferrer'>{$url}</a>";
-      }
-    } else {
-      $replacement .= theme('external_link', $url);
-    }
-    return $replacement;
-  }
-}
-
-
 function twitter_parse_tags($input, $entities = false) {
 
         //Expanded t.co links to find thumbnails etc
@@ -652,19 +630,51 @@ function twitter_parse_tags($input, $entities = false) {
                 }
         }
 
-    $urls = Twitter_Extractor::extractURLS($input);
+    // Create an array containing all URLs
+    $urls = Twitter_Extractor::create($input)
+                            ->extractURLs();
 
     $out = $input;
 
     if (setting_fetch('longurl') == 'yes'){
+    // Expand all URLs
     foreach ($urls as $value)
     {
   $out = str_replace ($value, long_url($value) , $out) ;
     }
     }
-    
-    $autolink = new Dabr_Autolink();
-    $out = $autolink->autolink($out);
+
+        // Hyperlink the URLs 
+        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+        {
+                foreach($urls as $url) 
+                {
+                        $encoded = urlencode($url);
+                     if (setting_fetch('linktrans') == 'yes') {
+                        $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>[link]</a>", $out);
+                     } else {
+                        $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$url}</a>", $out);
+                     }
+                }
+        } else 
+        {
+                        $out = Twitter_Autolink::create($out)
+                                                ->setTarget('')
+                                                ->setTag('')
+                                                ->addLinksToURLs();
+        }
+
+        // Hyperlink the @ and lists
+        $out = Twitter_Autolink::create($out)
+                                ->setTarget('')
+                                ->setTag('')
+                                ->addLinksToUsernamesAndLists();
+
+        // Hyperlink the #      
+        $out = Twitter_Autolink::create($out)
+                                ->setTarget('')
+                                ->addLinksToHashtags();
+
 
   //if (setting_fetch('showthumbs', 'yes') == 'yes') {
   //Add in images
@@ -1207,7 +1217,8 @@ function twitter_user_page($query)
   $content .= "<p>In reply to:<br />{$tweet->text}</p>";
   
   if ($subaction == 'replyall') {
-      $found = Twitter_Extractor::extractMentionedScreennames($tweet->text);
+      $found = Twitter_Extractor::create($tweet->text)
+              ->extractMentionedUsernames();
       $to_users = array_unique(array_merge($to_users, $found));
   }
     }
@@ -1413,7 +1424,7 @@ function theme_user_header($user) {
   $link = theme('external_link', $user->url);
   //Some locations have a prefix which should be removed (UbertTwitter and iPhone)
   //Sorry if my PC has converted from UTF-8 with the U (artesea)
-  $cleanLocation = str_replace(array("iPhone: ","¨¹T: "),"",$user->location);
+  $cleanLocation = str_replace(array("iPhone: ","Ã¼T: "),"",$user->location);
   $raw_date_joined = strtotime($user->created_at);
   $date_joined = date('jS M Y', $raw_date_joined);
   $tweets_per_day = twitter_tweets_per_day($user, 1);
@@ -1433,7 +1444,7 @@ function theme_user_header($user) {
   }
   $out .= "Bio: {$bio}<br />";
   $out .= "Link: {$link}<br />";
-  $out .= "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external noreferrer\">{$user->location}</a><br />";
+  $out .= "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
   $out .= "Joined: {$date_joined} (~" . pluralise('tweet', $tweets_per_day, true) . " per day)";
   if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
     $out .= "<br />{$user->screen_name} ";
@@ -1839,7 +1850,7 @@ function theme_followers($feed, $hide_pagination = false) {
        $last_tweet = strtotime($user->status->created_at);
     $content = "{$name}<br /><span class='about'>";
     if($user->description != "")
-      $content .= "Bio: {$user->description}<br />";
+      $content .= "Bio: " . twitter_parse_tags($user->description) . "<br />";
     if($user->location != "")
       $content .= "Location: {$user->location}<br />";
     $content .= "Info: ";
@@ -1990,7 +2001,7 @@ function theme_action_icons($status) {
   //Reply All functionality. 
     if(substr_count(($status->text), '@') >= 1)
     {
-      $found = Twitter_Extractor::extractMentionedScreennames($status->text);
+      $found = Twitter_Extractor::create($status->text)->extractMentionedUsernames();
       $to_users = array_unique($found);
       
       $key = array_search(user_current_username(), $to_users); // Remove the username of the authenticated user
@@ -2083,4 +2094,5 @@ function pluralise($word, $count, $show = FALSE) {
   if($show) $word = "{$count} {$word}";
   return $word . (($count != 1) ? 's' : '');
 }
+
 ?>
