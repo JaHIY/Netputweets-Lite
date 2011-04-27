@@ -1,10 +1,10 @@
 <?php
 
 // Twitter's API URL.
-define('API_URL','http://api.twitter.com/1/');
+define('API_URL','https://api.twitter.com/1/');
 
 // Twitter's Search API URL.
-define('APIS_URL','http://search.twitter.com/');
+define('APIS_URL','https://search.twitter.com/');
 
 define('NETPUTWEETS_TITLE', 'Netputweets Lite!');
 
