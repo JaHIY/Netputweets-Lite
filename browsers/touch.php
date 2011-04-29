@@ -32,14 +32,7 @@ function touch_theme_page($title, $content) {
       '.theme('css').'
             </head>
             <body id="thepage">';
-
-        if (file_exists("common/admob.php"))
-        {
-      echo '<div class="advert">';
-      require_once("common/admob.php");
-      echo '</div>';
-        }
-        echo        $body,
+        echo $body,
             '</body>
                 </html>';
         exit();
@@ -70,10 +63,11 @@ function touch_theme_menu_bottom() {
 }
 
 function touch_theme_status_time_link($status, $is_link = true) {
-  $out = theme_status_time_link($status, $is_link);
-  $out = str_replace(array(' ago', ' years', ' days', ' hours', ' min', ' sec'),
-         array('', 'y', 'd', 'h', 'm', 's'), $out);
-  return $out;
+        $out = theme_status_time_link($status, $is_link);
+        //old method didn't work with conversation view (and no longer with correct pluralisation)
+        $out = str_replace(array(' years ago', ' year ago', ' days ago', ' day ago', ' hours ago', ' hour ago', ' mins ago', ' min ago', ' secs ago', ' sec ago'),
+                           array('y', 'y', 'd', 'd', 'h', 'h', 'm', 'm', 's', 's'), $out);
+        return $out;
 }
 
 function touch_theme_css() {

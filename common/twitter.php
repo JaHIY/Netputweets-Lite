@@ -565,7 +565,7 @@ function twitter_url_shorten_callback($match) {
  if (setting_fetch('short') == 'no') {
       return $match[0];
   } elseif (setting_fetch('short') == 'j.mp') {
-  if (!defined('BITLY_API_KEY')) return $match[0];
+  if (BITLY_API_KEY == '') return $match[0];
   $request = 'http://api.bit.ly/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
   $json = json_decode(twitter_fetch($request));
   if ($json->status_code == 200) {
@@ -1785,7 +1785,7 @@ function theme_timeline($feed)
     }
     if ($status->retweeted_by) {
     $retweeted_by = $status->retweeted_by->user->screen_name;
-     $source .= "<br />retweeted to you by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
+     $source .= "<br />retweeted by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
     }
     $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text} <span class='texts'>$source</span>";
       unset($row);
@@ -2085,9 +2085,9 @@ function theme_action_icon($url, $image_url, $text) {
   // alt attribute left off to reduce bandwidth by about 720 bytes per page
   if (preg_match('/MAP|OT|GEO/i', $text))
     {
-        return "<a href='$url' rel='external noreferrer'>$text</a>";
+        return "<a href='$url' title='$text' rel='external noreferrer'>$text</a>";
     }
-return "<a href='$url'>$text</a>";
+return "<a href='$url' title='$text'>$text</a>";
 }
 
 function pluralise($word, $count, $show = FALSE) {

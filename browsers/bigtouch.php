@@ -37,9 +37,8 @@ function bigtouch_theme_menu_bottom() {
 }
 
 function bigtouch_theme_status_time_link($status, $is_link = true) {
-return touch_theme_status_time_link();
+return touch_theme_status_time_link($status, $is_link);
 }
-
 
 function bigtouch_theme_css() {
   $out = theme_css();
