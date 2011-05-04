@@ -2,8 +2,9 @@
 function desktop_theme_status_form($text = '', $in_reply_to_id = NULL) {
   if (user_is_authenticated()) {
     $output = '<form method="post" action="update">
+  <fieldset><legend>What\'s Happening?</legend>
   <div><textarea id="status" name="status" rows="3" cols="60">'.$text.'</textarea>
-  <div><input name="in_reply_to_id" value="'.$in_reply_to_id.'" type="hidden" /><button id="submit" type="submit">Update</button><span id="remaining">140</span>';
+  <div><input name="in_reply_to_id" value="'.$in_reply_to_id.'" type="hidden" /><button id="submit" type="submit">Tweet</button><span id="remaining">140</span>';
     if (setting_fetch('buttongeo') == 'yes') {
       $output .= '<span id="geo" style="display: none; float: right;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
   <script type="text/javascript">
@@ -35,7 +36,7 @@ function geoSuccess(position) {
   </script>
 ';
 }
-    $output .= '</div></div></form>';
+    $output .= '</div></div></fieldset></form>';
     $output .= js_counter('status');
     if (setting_fetch('browser') == 'desktop') {
     $output .= '<script type="text/javascript">

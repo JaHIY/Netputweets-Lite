@@ -74,6 +74,11 @@ menu_register(array(
     'security' => true,
     'callback' => 'twitter_confirmation_page',
   ),
+  'confirmed' => array(
+    'hidden' => true,
+    'security' => true,
+    'callback' => 'twitter_confirmed_page',
+  ),
   'block' => array(
     'hidden' => true,
     'security' => true,
@@ -101,11 +106,6 @@ menu_register(array(
     'security' => true,
     'security' => true,
     'callback' => 'twitter_friends_page',
-  ),
-  'blockings' => array(
-    'security' => true,
-    'security' => true,
-    'callback' => 'twitter_blockings_page',
   ),
   'delete' => array(
     'hidden' => true,
@@ -280,9 +280,20 @@ function twitter_trends_page($query)
   $local = twitter_process($request);
   $header = '<form method="get" action="trends"><select name="woeid">';
   $header .= '<option value="1"' . (($woeid == 1) ? ' selected="selected"' : '') . '>Worldwide</option>';
+
+  //sort the output, going for Country with Towns as children
+  foreach($local as $key => $row) {
+         $c[$key] = $row->country;
+         $t[$key] = $row->placeType->code;
+         $n[$key] = $row->name;
+  }
+  array_multisort($c, SORT_ASC, $t, SORT_DESC, $n, SORT_ASC, $local);
+
   foreach($local as $l) {
     if($l->woeid != 1) {
-      $header .= '<option value="' . $l->woeid . '"' . (($l->woeid == $woeid) ? ' selected="selected"' : '') . '>' . $l->name . '</option>';
+      $n = $l->name;
+      if($l->placeType->code != 12) $n = '-' . $n;
+      $header .= '<option value="' . $l->woeid . '"' . (($l->woeid == $woeid) ? ' selected="selected"' : '') . '>' . $n . '</option>';
     }
   }
   $header .= '</select> <button type="submit">Go</button></form>';
@@ -462,7 +473,7 @@ function twitter_profile_page($query) {
     return theme('page', 'Update Profile', $content);
 }
 
-function twitter_process($url, $post_data = false) 
+function twitter_process($url, $post_data = false)
 {
     if ($post_data === true)
     {
@@ -757,7 +768,7 @@ function twitter_embed_thumbnails($text)
                                 
                                 if ($thumb) //Not all services have thumbnails
                                 {
-                                        $images[] = theme('external_link', "http://$match", "<img src='http://i.tinysrc.mobi/x50/$thumb' />");
+                                        $images[] = theme('external_link', "http://$match", "<img src='http://i.tinysrc.mobi/x50/200/$thumb' />");
                                 }
                         }
                 }
@@ -907,8 +918,12 @@ function twitter_block_page($query) {
   if ($user) {
     if($query[0] == 'block'){
       $request = API_URL."blocks/create/create.json?screen_name={$user}";
+      twitter_process($request, true);
+      twitter_refresh("confirmed/block/{$user}");
     } else {
       $request = API_URL."blocks/destroy/destroy.json?screen_name={$user}";
+      twitter_process($request, true);
+      twitter_refresh("confirmed/unblock/{$user}");
     }
     twitter_process($request, true);
     twitter_refresh("user/{$user}");
@@ -929,7 +944,7 @@ function twitter_spam_page($query)
     twitter_process($request, $post_data);
 
     //Where should we return the user to?  Back to the user
-    twitter_refresh("user/{$user}");
+    twitter_refresh("confirmed/spam/{$user}");
 }
 
 
@@ -974,6 +989,26 @@ function twitter_confirmation_page($query)
   theme('Page', 'Confirm', $content);
 }
 
+function twitter_confirmed_page($query)
+{
+        // the URL /confirm can be passed parameters like so /confirm/param1/param2/param3 etc.
+        $action = $query[1]; // The action. block, unblock, spam
+        $target = $query[2]; // The username of the target
+
+        switch ($action) {
+                case 'block':
+                        $content  = "<p>You have <strong>blocked @$target</strong>.</p>";
+                        break;
+                case 'unblock':
+                        $content  = "<p>You have <strong>unblocked @$target</strong>.</p>";
+                        break;
+                case 'spam':
+                        $content = "<p>You have reported @$target as <strong>spam</strong>.</p>";
+                        break;
+        }
+        theme ('Page', 'Confirmed', $content);
+}
+
 function twitter_friends_page($query) {
   $user = $query[1];
   if (!$user) {
@@ -996,13 +1031,6 @@ function twitter_followers_page($query) {
   $tl = lists_paginated_process($request);
   $content = theme('followers', $tl);
   theme('page', 'Followers', $content);
-}
-
-function twitter_blockings_page($query) {
-  $request = API_URL.'blocks/blocking.json?page='.intval($_GET['page']);
-  $tl = twitter_process($request);
-  $content = theme('followers', $tl);
-  theme('page', 'Blockings', $content);
 }
 
 function twitter_update() {
@@ -1300,7 +1328,7 @@ function twitter_hashtag_page($query) {
 
 function theme_status_form($text = '', $in_reply_to_id = NULL) {
   if (user_is_authenticated()) {
-    $output = "<form method='post' action='update'><div><input name='status' value='{$text}' maxlength='140' /> <input name='in_reply_to_id' value='{$in_reply_to_id}' type='hidden' /><button type='submit'>Update</button>";
+    $output = "<form method='post' action='update'><fieldset><legend>What's Happening?</legend><div><input name='status' value='{$text}' maxlength='140' /> <input name='in_reply_to_id' value='{$in_reply_to_id}' type='hidden' /><button type='submit'>Tweet</button>";
     if (setting_fetch('buttongeo') == 'yes') {
       $output .= '<div><span id="geo" style="display: none;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
   <script type="text/javascript">
@@ -1331,7 +1359,7 @@ function geoSuccess(position) {
 //-->
   </script></div>';
     }
-  $output .= "</div></form>";
+  $output .= "</div></fieldset></form>";
     return $output ;
   }
 }
@@ -1524,8 +1552,9 @@ function theme_user_header($user) {
 }
 
 function theme_avatar($url, $force_large = false) {
-    $size = $force_large ? 48 : 24;
     if (setting_fetch('avataro', 'yes') !== 'yes') {
+    $size = $force_large ? 48 : 24;
+    $force_large || $url = str_replace('_normal.', '_mini.', $url);
   return "<img class='shead' src='$url' height='$size' width='$size' />";
     } else {
   return '';
@@ -1844,7 +1873,7 @@ function theme_followers($feed, $hide_pagination = false) {
   if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
 
     foreach ($feed->users->user as $user) {
-    
+
    $name = theme('full_name', $user);
    $tweets_per_day = twitter_tweets_per_day($user);
        $last_tweet = strtotime($user->status->created_at);
@@ -2083,11 +2112,11 @@ $actions[] = theme('action_icon',"search?query=%40{$from}",'images/q.png','?');
 
 function theme_action_icon($url, $image_url, $text) {
   // alt attribute left off to reduce bandwidth by about 720 bytes per page
-  if (preg_match('/MAP|OT|GEO/i', $text))
+  if (preg_match('/MAP|OT/i', $text))
     {
-        return "<a href='$url' title='$text' rel='external noreferrer'>$text</a>";
+        return "<a href='$url' rel='external nofollow noreferrer'>$text</a>";
     }
-return "<a href='$url' title='$text'>$text</a>";
+return "<a href='$url'>$text</a>";
 }
 
 function pluralise($word, $count, $show = FALSE) {

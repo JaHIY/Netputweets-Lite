@@ -71,7 +71,7 @@ function theme_menu_toptop($menu) {
             $links[] = "<a href='retweets' accesskey='2'>Retweets</a>";
         }
         if (setting_fetch('topretweeted') == 'yes') {
-            $links[] = "<a href='retweeted' accesskey='5'>Retweeted</a>";
+            $links[] = "<a href='retweeted' accesskey='6'>Retweeted</a>";
         }
         if (setting_fetch('topdirects', 'yes') == 'yes') {
             $links[] = "<a href='directs' accesskey='3'>Directs</a>";
@@ -99,7 +99,7 @@ function theme_menu_bottomtom($menu) {
             $links[] = "<a href='retweets' accesskey='2'>Retweets</a>";
         }
         if (setting_fetch('retweeted') == 'yes') {
-            $links[] = "<a href='retweeted' accesskey='5'>Retweeted</a>";
+            $links[] = "<a href='retweeted' accesskey='6'>Retweeted</a>";
         }
         if (setting_fetch('directs') == 'yes') {
             $links[] = "<a href='directs' accesskey='3'>Directs</a>";
@@ -122,9 +122,6 @@ function theme_menu_bottomtom($menu) {
         if (setting_fetch('friends') == 'yes') {
             $links[] = "<a href='friends'>Friends</a>";
         }
-        if (setting_fetch('blockings') == 'yes') {
-            $links[] = "<a href='blockings'>Blockings</a>";
-        }
         if (setting_fetch('trends') == 'yes') {
             $links[] = "<a href='trends'>Trends</a>";
         }
@@ -144,7 +141,7 @@ function theme_menu_bottomtom($menu) {
         }
     }
     if (setting_fetch('srefresh', 'yes') == 'yes') {
-        $links[] = "<a href='{$_GET['q']}' accesskey='5'>Refresh</a> 5";
+        $links[] = "<a href='{$_GET['q']}' accesskey='5'>Refresh</a>";
     }
     return '<div class="menu menu-$menu">'.implode(' | ', $links).'</div>';
 }

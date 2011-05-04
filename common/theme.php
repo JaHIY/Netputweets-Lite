@@ -230,6 +230,8 @@ function theme_css() {
   .translate{padding:5px;margin:15px;border:thin solid;}
   input#query{width:100%;max-width:300px;}
   #about{margin:0.5em;padding:0.1em 1em;}
+  fieldset{border:1px dashed #{$c->bodyt};}
+  hr{border:1px dotted  #{$c->bodyt};}
 </style>";
   return $t;
 }
