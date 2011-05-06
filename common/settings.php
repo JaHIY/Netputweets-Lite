@@ -16,6 +16,7 @@ $GLOBALS['colour_schemes'] = array(
     13 => 'OS X Graphite|677686,F7F7F5,282828,677686,EBEBEB,F7F7F5,C2D6EB,C2D6EB,677686,fff,fff',
     14 => 'Twitter by jinwen|2674B2,BFDBE6,000,999,F7FCF6,D8ECF7,A9D0DF,8CBED5,002031,88D0DE,88D0DE',
     15 => 'Android|67753A,F0F0F0,2C3342,959F77,F5F5F5,E8F0CD,D1E29C,C5DB80,A4C639,FFF,FFF',
+    16 => 'Python Twitter|53BEDF,005E7B,FFF5CA,2F9DBF,01799E,005E7B,01799E,005E7B,2D97BF,FFF,FFF',
 );
 
 menu_register(array(
@@ -258,6 +259,7 @@ function settings_page($args) {
   $content .= '<label><input type="checkbox" name="lists" value="yes" '. (setting_fetch('lists') == 'yes' ? ' checked="checked" ' : '') .' /> Lists</label><br />';
   $content .= '<label><input type="checkbox" name="followers" value="yes" '. (setting_fetch('followers') == 'yes' ? ' checked="checked" ' : '') .' /> Followers</label><br />';
   $content .= '<label><input type="checkbox" name="friends" value="yes" '. (setting_fetch('friends') == 'yes' ? ' checked="checked" ' : '') .' /> Friends</label><br />';
+  $content .= '<label><input type="checkbox" name="blockings" value="yes" '. (setting_fetch('blockings') == 'yes' ? ' checked="checked" ' : '') .' /> Blockings</label><br />';
   $content .= '<label><input type="checkbox" name="trends" value="yes" '. (setting_fetch('trends') == 'yes' ? ' checked="checked" ' : '') .' /> Trends</label><br />';
   $content .= '<label><input type="checkbox" name="about" value="yes" '. (setting_fetch('about') == 'yes' ? ' checked="checked" ' : '') .' /> About</label><br />';
   $content .= '<label><input type="checkbox" name="ssettings" value="yes" '. (setting_fetch('ssettings', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Settings</label><br />';

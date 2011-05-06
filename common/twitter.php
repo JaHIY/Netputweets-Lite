@@ -112,6 +112,16 @@ menu_register(array(
     'security' => true,
     'callback' => 'twitter_delete_page',
   ),
+  'deleteDM' => array(
+    'hidden' => true,
+    'security' => true,
+    'callback' => 'twitter_deleteDM_page',
+  ),
+  'blockings' => array(
+    'security' => true,
+    'security' => true,
+    'callback' => 'twitter_blockings_page',
+  ),
   'retweet' => array(
     'hidden' => true,
     'security' => true,
@@ -136,11 +146,16 @@ menu_register(array(
     'accesskey' => '5',
     'title' => 'Retweeted',
   ),
+    'retweeted_by' => array(
+    'security' => true,
+    'hidden' => true,
+    'callback' => 'twitter_retweeters_page',
+  ),
     'profile' => array(
     'hidden' => true,
     'security' => true,
     'callback' => 'twitter_profile_page',
-  ),
+  )
 ));
 
 // Patch in multibyte support
@@ -531,7 +546,7 @@ function twitter_process($url, $post_data = false)
   case 201:
       $json = json_decode($response);
       if ($json)
-      { 
+      {
     return $json;
       }
       return $response;
@@ -891,6 +906,18 @@ function twitter_delete_page($query) {
   }
 }
 
+function twitter_deleteDM_page($query) {
+    //Deletes a DM
+    twitter_ensure_post_action();
+
+    $id = (string) $query[1];
+    if (is_numeric($id)) {
+        $request = API_URL."direct_messages/destroy/$id.json";
+        twitter_process($request, true);
+        twitter_refresh('directs/');
+    }
+}
+
 function twitter_ensure_post_action() {
   // This function is used to make sure the user submitted their action as an HTTP POST request
   // It slightly increases security for actions such as Delete, Block and Spam
@@ -969,10 +996,15 @@ function twitter_confirmation_page($query)
   $content .= "<ul><li>You won't show up in their list of friends</li><li>They won't see your updates on their home page</li><li>They won't be able to follow you</li><li>You <em>can</em> unblock them but you will need to follow them again afterwards</li></ul>";
       }
       break;
-    
+
     case 'delete':
       $content = '<p>Are you really sure you want to delete your tweet?</p>';
       $content .= "<ul><li>Tweet ID: <strong>$target</strong></li><li>There is no way to undo this action.</li></ul>";
+      break;
+
+    case 'deleteDM':
+      $content = '<p>Are you really sure you want to delete that DM?</p>';
+      $content .= "<ul><li>Tweet ID: <strong>$target</strong></li><li>There is no way to undo this action.</li><li>The DM will be deleted from both the sender's outbox <em>and</em> receiver's inbox.</li></ul>";
       break;
 
     case 'spam':
@@ -980,7 +1012,8 @@ function twitter_confirmation_page($query)
       $content .= "<p>They will also be blocked from following you.</p>";
       break;
 
-  }    
+  }
+
   $content .= "<form action='$action/$target' method='post'>
   <div>
       <button type='submit'>Yes please</button>
@@ -1031,6 +1064,22 @@ function twitter_followers_page($query) {
   $tl = lists_paginated_process($request);
   $content = theme('followers', $tl);
   theme('page', 'Followers', $content);
+}
+
+function twitter_blockings_page($query) {
+  $request = API_URL.'blocks/blocking.json?page='.intval($_GET['page']).'&include_entities=true';
+  $tl = twitter_process($request);
+  $content = theme('blockings', $tl);
+  theme('page', 'Blockings', $content);
+}
+
+//  Shows every user who retweeted a specific status
+function twitter_retweeters_page($tweet) {
+  $id = $tweet[1];
+  $request = API_URL."statuses/{$id}/retweeted_by.xml";
+  $tl = lists_paginated_process($request);
+  $content = theme('retweeters', $tl);
+  theme('page', "Everyone who retweeted {$id}", $content);
 }
 
 function twitter_update() {
@@ -1108,13 +1157,6 @@ function twitter_retweeted_page() {
 function twitter_directs_page($query) {
   $action = strtolower(trim($query[1]));
   switch ($action) {
-    case 'delete':
-      $id = $query[2];
-      if (!is_numeric($id)) return;
-      $request = API_URL."direct_messages/destroy/$id.json";
-      twitter_process($request, true);
-      twitter_refresh();
-      
     case 'create':
       $to = $query[2];
       $content = theme('directs_form', $to);
@@ -1242,8 +1284,27 @@ function twitter_user_page($query)
     // Are we replying to anyone?
     if (is_numeric($in_reply_to_id)) {
   $tweet = twitter_find_tweet_in_timeline($in_reply_to_id, $tl);
-  $content .= "<p>In reply to:<br />{$tweet->text}</p>";
-  
+
+    // Hyperlink the URLs (target _blank
+    $out = Twitter_Autolink::create($tweet->text)
+                                    ->setTarget('')
+                                    ->setTag('')
+                                    ->addLinksToURLs();
+
+                // Hyperlink the @ and lists
+    $out = Twitter_Autolink::create($out)
+                                    ->setTarget('')
+                                    ->setTag('')
+                                    ->addLinksToUsernamesAndLists();
+
+    // Hyperlink the #
+    $out = Twitter_Autolink::create($out)
+                                    ->setTarget('')
+                                    ->addLinksToHashtags();
+
+    $content .= "<p>In reply to:<br />{$out}</p>";
+
+
   if ($subaction == 'replyall') {
       $found = Twitter_Extractor::create($tweet->text)
               ->extractMentionedUsernames();
@@ -1805,16 +1866,16 @@ function theme_timeline($feed)
     $source .= " <a href='status/{$status->in_reply_to_status_id_str}'>in reply to {$status->in_reply_to_screen_name}</a>";
       }
     if ($status->retweet_count)     {
-      $source .= " retweeted ";
+      $source .= " <a href='retweeted_by/{$status->id}'>retweeted ";
       switch($status->retweet_count) {
-            case(1) : $source .= "once"; break;
-            case(2) : $source .= "twice"; break;
-            default : $source .= $status->retweet_count . " times";
+            case(1) : $source .= "once</a>"; break;
+            case(2) : $source .= "twice</a>"; break;
+            default : $source .= $status->retweet_count . " times</a>";
       }
     }
     if ($status->retweeted_by) {
     $retweeted_by = $status->retweeted_by->user->screen_name;
-     $source .= "<br />retweeted by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
+     $source .= "<br /><a href='retweeted_by/{$status->id}'>retweeted</a> by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
     }
     $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text} <span class='texts'>$source</span>";
       unset($row);
@@ -1905,6 +1966,90 @@ function theme_followers($feed, $hide_pagination = false) {
   'class' => 'tweet');
   }
       }
+        $content = theme('table', array(), $rows, array('class' => 'followers'));
+        if (!$hide_pagination)
+        $content .= theme('list_pagination', $feed);
+        return $content;
+}
+
+function theme_blockings($feed, $hide_pagination = false) {
+  $rows = array();
+  if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
+
+    foreach ($feed as $user) {
+
+   $name = theme('full_name', $user);
+   $tweets_per_day = twitter_tweets_per_day($user);
+       $last_tweet = strtotime($user->status->created_at);
+    $content = "{$name}<br /><span class='about'>";
+    if($user->description != "")
+      $content .= "Bio: " . twitter_parse_tags($user->description) . "<br />";
+    if($user->location != "")
+      $content .= "Location: {$user->location}<br />";
+    $content .= "Info: ";
+    $content .= pluralise('tweet', $user->statuses_count, true) . ", ";
+    $content .= pluralise('friend', $user->friends_count, true) . ", ";
+    $content .= pluralise('follower', $user->followers_count, true) . ", ";
+    $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
+    $content .= "Last tweet: ";
+    if($user->protected == 'true' && $last_tweet == 0)
+      $content .= "Private";
+    else if($last_tweet == 0)
+      $content .= "Never tweeted";
+    else
+      $content .= twitter_date('l jS F Y', $last_tweet);
+    $content .= "</span>";
+
+  if (setting_fetch('avataro', 'yes') !== 'yes') {
+    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url), 'class' => 'avatar'),
+      array('data' => $content, 'class' => 'status shift')),
+  'class' => 'tweet');
+  } else {
+    $rows[] = array('data' => array(array('data' => $content, 'class' => 'status shift')),
+  'class' => 'tweet');
+  }
+      }
+        $content = theme('table', array(), $rows, array('class' => 'followers'));
+        if (!$hide_pagination)
+        $content .= theme('list_pagination', $feed);
+        return $content;
+}
+
+// Annoyingly, retweeted_by.xml and followers.xml are subtly different. 
+// TODO merge theme_retweeters with theme_followers
+function theme_retweeters($feed, $hide_pagination = false) {
+        $rows = array();
+        if (count($feed) == 0 || $feed == '[]') return '<p>No one has retweeted this status.</p>';
+
+        foreach ($feed->user as $user) {
+
+                $name = theme('full_name', $user);
+                $tweets_per_day = twitter_tweets_per_day($user);
+                $last_tweet = strtotime($user->status->created_at);
+                $content = "{$name}<br /><span class='about'>";
+                if($user->description != "")
+                        $content .= "Bio: " . twitter_parse_tags($user->description) . "<br />";
+                if($user->location != "")
+                        $content .= "Location: {$user->location}<br />";
+                $content .= "Info: ";
+                $content .= pluralise('tweet', $user->statuses_count, true) . ", ";
+                $content .= pluralise('friend', $user->friends_count, true) . ", ";
+                $content .= pluralise('follower', $user->followers_count, true) . ", ";
+                $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
+                $content .= "Last tweet: ";
+                if($user->protected == 'true' && $last_tweet == 0)
+                        $content .= "Private";
+                else if($last_tweet == 0)
+                        $content .= "Never tweeted";
+                else
+                        $content .= twitter_date('l jS F Y', $last_tweet);
+                $content .= "</span>";
+
+                $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url), 'class' => 'avatar'),
+                                                array('data' => $content, 'class' => 'status shift')),
+                                'class' => 'tweet');
+
+        }
 
       $content = theme('table', array(), $rows, array('class' => 'followers'));
       if (!$hide_pagination)
@@ -2080,7 +2225,7 @@ function theme_action_icons($status) {
     }
   } else {
   if (setting_fetch('buttondel', 'yes') == 'yes') {
-    $actions[] = theme('action_icon', "directs/delete/{$status->id}", 'images/trash.gif', 'DEL');
+    $actions[] = theme('action_icon', "confirm/deleteDM/{$status->id}", 'images/trash.gif', 'DEL');
     }
   }
   
