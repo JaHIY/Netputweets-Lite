@@ -783,7 +783,7 @@ function twitter_embed_thumbnails($text)
                                 
                                 if ($thumb) //Not all services have thumbnails
                                 {
-                                        $images[] = theme('external_link', "http://$match", "<img src='http://i.tinysrc.mobi/x50/200/$thumb' />");
+                                        $images[] = theme('external_link', "http://$match", "<img alt='' src='http://i.tinysrc.mobi/x50/200/$thumb' />");
                                 }
                         }
                 }
@@ -1431,7 +1431,7 @@ function theme_status($status) {
 
   $time_since = theme('status_time_link', $status);
   $parsed = twitter_parse_tags($status->text, $status->entities);
-  $avatar = theme('avatar', $status->user->profile_image_url);
+  $avatar = theme('avatar', $status->user->profile_image_url, htmlspecialchars($status->user->name, ENT_QUOTES, 'UTF-8'));
 
   $out = theme('status_form', "@{$status->user->screen_name} ");
   $out .= "<div class='timeline'>\n";
@@ -1521,7 +1521,7 @@ function theme_user_header($user) {
   $username = user_current_username();
    $out = "<div class='profile'>";
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-   $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', $user->profile_image_url))."</span>";
+   $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), $name)."</span>";
    }
   $out .= "<span class='status shift'><span class='textb'>{$name}</span><br />";
   $out .= "<span class='about'>";
@@ -1612,11 +1612,11 @@ function theme_user_header($user) {
   return $out;
 }
 
-function theme_avatar($url, $force_large = false) {
+function theme_avatar($url, $name='', $force_large = false) {
     if (setting_fetch('avataro', 'yes') !== 'yes') {
     $size = $force_large ? 48 : 24;
     $force_large || $url = str_replace('_normal.', '_mini.', $url);
-  return "<img class='shead' src='$url' height='$size' width='$size' />";
+  return "<img class='shead' alt='$name' src='$url' height='$size' width='$size' />";
     } else {
   return '';
     }
@@ -1851,7 +1851,7 @@ function theme_timeline($feed)
       $link = theme('status_time_link', $status, !$status->is_direct);
     }
       $actions = theme('action_icons', $status);
-      $avatar = theme('avatar', $status->from->profile_image_url);
+      $avatar = theme('avatar', $status->from->profile_image_url, htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
     if (setting_fetch('buttonfrom', 'yes') == 'yes') {
   if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
     $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
@@ -1958,7 +1958,7 @@ function theme_followers($feed, $hide_pagination = false) {
     $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url), 'class' => 'avatar'),
+    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
       array('data' => $content, 'class' => 'status shift')),
   'class' => 'tweet');
   } else {
@@ -2001,7 +2001,7 @@ function theme_blockings($feed, $hide_pagination = false) {
     $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url), 'class' => 'avatar'),
+    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
       array('data' => $content, 'class' => 'status shift')),
   'class' => 'tweet');
   } else {
@@ -2045,7 +2045,7 @@ function theme_retweeters($feed, $hide_pagination = false) {
                         $content .= twitter_date('l jS F Y', $last_tweet);
                 $content .= "</span>";
 
-                $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url), 'class' => 'avatar'),
+                $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
                                                 array('data' => $content, 'class' => 'status shift')),
                                 'class' => 'tweet');
 
@@ -2080,7 +2080,7 @@ function theme_search_results($feed) {
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
     $row = array(
-      theme('avatar', $status->profile_image_url),
+      theme('avatar', $status->profile_image_url, htmlspecialchars($status->name, ENT_QUOTES, 'UTF-8')),
       "<a href='user/{$status->from_user}'>{$status->from_user}</a> $actions - {$link}<br />{$text}",
     );
   } else {

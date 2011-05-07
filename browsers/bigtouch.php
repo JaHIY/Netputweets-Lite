@@ -16,9 +16,9 @@ function bigtouch_theme_search_form($query) {
   return desktop_theme_search_form($query);
 }
 
-function bigtouch_theme_avatar($url, $force_large = false) {
+function bigtouch_theme_avatar($url, $name='', $force_large = false) {
 if (setting_fetch('avataro', 'yes') !== 'yes') {
-  return "<img src='$url' width='48' height='48' />";
+  return "<img src='$url' alt='$name' width='48' height='48' />";
   } else {
         return '';
     }

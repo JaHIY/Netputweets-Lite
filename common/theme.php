@@ -142,7 +142,7 @@ function theme_page($title, $content) {
   ob_start('ob_gzhandler');
   $page = ($_GET['page'] == 0 ? null : " - Page ".$_GET['page'])." - ";
   header('Content-Type: text/html; charset=utf-8');
-echo    '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" "http://www.wapforum.org/DTD/xhtml-mobile10.dtd">
+echo    '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <title>',NETPUTWEETS_TITLE,' - ',$title,'</title>
