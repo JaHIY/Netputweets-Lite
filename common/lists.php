@@ -175,12 +175,12 @@ function theme_lists($json) {
         return "<p>No lists to display</p>";
     }
     $rows = array();
-    $headers = array('List', 'Members', 'Subscribers');    
+    $headers = array('List ', 'Members ', 'Subscribers');    
     foreach ($json->lists->list as $list) {
         $url = "lists/{$list->user->screen_name}/{$list->slug}";
         $rows[] = array(
-            "<a href='user/{$list->user->screen_name}'>@{$list->user->screen_name}</a>/<a href='{$url}'><strong>{$list->slug}</strong></a>",
-            "<a href='{$url}/members'>{$list->member_count}</a>",
+            "<a href='user/{$list->user->screen_name}'>@{$list->user->screen_name}</a>/<a href='{$url}'><strong>{$list->slug}</strong></a> ",
+            "<a href='{$url}/members'>{$list->member_count}</a> ",
             "<a href='{$url}/subscribers'>{$list->subscriber_count}</a>",
         );
     }

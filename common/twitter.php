@@ -552,7 +552,7 @@ function twitter_process($url, $post_data = false)
       return $response;
   case 401:
       user_logout();
-      theme('error', "<p>Error: Login credentials incorrect.</p><p>{$response_info['http_code']}: {$result}</p><hr><p>$url</p>");
+      theme('error', "<p>Error: Login credentials incorrect.</p><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
   case 0:
       $result = $erno . ":" . $er . "<br />" ;
       /*
@@ -576,7 +576,7 @@ function twitter_process($url, $post_data = false)
     }
     */
       }
-      theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p><hr><p>$url</p>");
+      theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
     }
 }
 
@@ -1910,8 +1910,7 @@ $row = array('data' => $row, 'class' => $class);
       //Doesn't work. since_id returns the most recent tweets up to since_id, not since. Grrr
       //$links[] = "<a href='{$_GET['q']}?since_id=$since_id'>Newer</a>";
 
-      //max_id - 1 fails on 32 bit php installs, so removed. uncomment line below if you want it back
-      //$max_id = (float)$max_id - 1; //stops last tweet appearing as first tweet on next page
+      if(is_64bit()) $max_id = intval($max_id) - 1; //stops last tweet appearing as first tweet on next page
       $links[] = "<a href='{$_GET['q']}?max_id=$max_id' accesskey='9'>Older</a> 9";
       $content .= '<p>'.implode(' | ', $links).'</p>';
     }
@@ -2045,9 +2044,14 @@ function theme_retweeters($feed, $hide_pagination = false) {
                         $content .= twitter_date('l jS F Y', $last_tweet);
                 $content .= "</span>";
 
+  if (setting_fetch('avataro', 'yes') !== 'yes') {
                 $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
-                                                array('data' => $content, 'class' => 'status shift')),
+                          array('data' => $content, 'class' => 'status shift')),
                                 'class' => 'tweet');
+  } else {
+    $rows[] = array('data' => array(array('data' => $content, 'class' => 'status shift')),
+  'class' => 'tweet');
+  }
 
         }
 
@@ -2267,6 +2271,12 @@ return "<a href='$url'>$text</a>";
 function pluralise($word, $count, $show = FALSE) {
   if($show) $word = "{$count} {$word}";
   return $word . (($count != 1) ? 's' : '');
+}
+
+function is_64bit() {
+  $int = "9223372036854775807";
+  $int = intval($int);
+  return ($int == 9223372036854775807);
 }
 
 ?>
