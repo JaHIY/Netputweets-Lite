@@ -1030,13 +1030,13 @@ function twitter_confirmed_page($query)
 
         switch ($action) {
                 case 'block':
-                        $content  = "<p>You have <strong>blocked @$target</strong>.</p>";
+                        $content  = "<p><span class='status shift'>Bye-bye @$target - you are now <strong>blocked</strong>.</span></p>";
                         break;
                 case 'unblock':
-                        $content  = "<p>You have <strong>unblocked @$target</strong>.</p>";
+                        $content  = "<p><span class='status shift'>Hello again @$target - you have been <strong>unblocked</strong>.</span></p>";
                         break;
                 case 'spam':
-                        $content = "<p>You have reported @$target as <strong>spam</strong>.</p>";
+                        $content = "<p><span class='status shift'>Yum! Yum! Yum! Delicious spam! Goodbye @$target.</span></p>";
                         break;
         }
         theme ('Page', 'Confirmed', $content);
@@ -1536,13 +1536,13 @@ function theme_user_header($user) {
   $out .= "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
   $out .= "Joined: {$date_joined} (~" . pluralise('tweet', $tweets_per_day, true) . " per day)";
   if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
-    $out .= "<br />{$user->screen_name} ";
+    $out .= "<br /><strong>{$user->screen_name} ";
         if ($following == true) {
             $out .= "follows";
         } else {
             $out .= "does not follow";
         }
-    $out .= " {$username}";
+    $out .= " {$username}</strong>";
   }
   $out .= "</span></span>";
   $out .= "<div class='features'>";

@@ -19,25 +19,6 @@ define('OAUTH_CONSUMER_SECRET', 'hym4qJF1F6nyjISzRUCFBU4OQSIr5mrk7074vId3K8');
 define('BITLY_LOGIN', 'netputer');
 define('BITLY_API_KEY', 'R_bd1cb944bb3a85a75e94d18354464d46');
 
-// slideshare.com API key and Shared secret for getting Slidesha.re thumbnails. Available from http://www.slideshare.net/developers/applyforapi
-define('SLIDESHARE_API_KEY', '3Uj4xBhl');
-define('SLIDESHARE_SHARED_SECRET', 'D7IBaRIJ');
-
-// Optional API keys for uploading images from http://imgur.com/register/api/
-define('IMGUR_API_KEY', '624c491c472a43a59f996f59eba7ca4e');
-
-// Optional API keys for uploading images from http://twitsnaps.com/dev/registration
-define('TWITSNAPS_API_KEY', '554e215897ba6e49dfb85bed0ade7d62');
-
-// Optional API keys for uploading images from http://www.mobypicture.com/apps/my
-define('MOBY_API_KEY', 'sQ1Eun9JiOEcYy8k');
-
-// Optional API keys for retrieving thumbnails
-define('FLICKR_API_KEY', 'dfca5cc61714ee31e38ee412086a0f87');
-
-// API key for Twitpic - sign up at http://dev.twitpic.com/
-define('TWITPIC_API_KEY', 'bba355928ab3bc55399ddf8af7dc96e3');
-
 // API key for Read It Later - sign up at http://readitlaterlist.com/api/signup/
 define('READ_IT_LATER_API_KEY', 'eWKA2m33d6768ksq40pdrq9NW5T1x1dk');
 
