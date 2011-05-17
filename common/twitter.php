@@ -591,7 +591,7 @@ function twitter_url_shorten_callback($match) {
  if (setting_fetch('short') == 'no') {
       return $match[0];
   } elseif (setting_fetch('short') == 'j.mp') {
-  if (BITLY_API_KEY == '') return $match[0];
+  if (BITLY_API_KEY == '' || BITLY_LOGIN == '') return $match[0];
   $request = 'http://api.bit.ly/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
   $json = json_decode(twitter_fetch($request));
   if ($json->status_code == 200) {

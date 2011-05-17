@@ -204,7 +204,7 @@ function theme_css() {
   a{color:#{$c->links};}table{border-collapse:collapse;}
   form{margin:.3em;}td{vertical-align:top;padding:0.3em;}
   img{border:0;}
-  body{background:#{$c->bodybg};color:#{$c->bodyt};margin:0;font:90% sans-serif;word-break:break-all;word-wrap:break-word;}
+  body{background:#{$c->bodybg};color:#{$c->bodyt};margin:0;font:90% sans-serif;}
   .odd{background:#{$c->odd}}
   .even{background:#{$c->even}}
   .reply{background:#{$c->replyodd}}
@@ -215,7 +215,7 @@ function theme_css() {
   .date{padding:5px;font-size:0.8em;font-weight:bold;color:#{$c->small}}
   .about,.time{font-size:0.75em;color:#{$c->small}}
   .avatar{display:block; height:26px; width:26px; left:0.3em; margin:0; overflow:hidden; position:absolute;}
-  .status{display:block;}
+  .status{display:block;word-wrap:break-word;}
   .list span{margin:0 4px 0 0;}";
   if (setting_fetch('avataro', 'yes') !== 'yes') {
   $t .= ".shift{margin-left:30px;min-height:24px;}";
