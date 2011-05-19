@@ -1,5 +1,7 @@
 <?php
 
+error_reporting(E_ALL ^ E_NOTICE);
+
 // Twitter's API URL.
 define('API_URL','https://api.twitter.com/1/');
 

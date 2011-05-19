@@ -639,6 +639,8 @@ function twitter_fetch($url) {
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   //curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+  $user_agent = "Mozilla/5.0 (compatible; dabr; " . BASE_URL . ")";
+  curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
   $response = curl_exec($ch);
   curl_close($ch);
@@ -1431,7 +1433,7 @@ function theme_status($status) {
 
   $time_since = theme('status_time_link', $status);
   $parsed = twitter_parse_tags($status->text, $status->entities);
-  $avatar = theme('avatar', $status->user->profile_image_url, htmlspecialchars($status->user->name, ENT_QUOTES, 'UTF-8'));
+  $avatar = theme('avatar', theme_get_avatar($status->user), htmlspecialchars($status->user->name, ENT_QUOTES, 'UTF-8'));
 
   $out = theme('status_form', "@{$status->user->screen_name} ");
   $out .= "<div class='timeline'>\n";
@@ -1509,7 +1511,7 @@ function theme_user_header($user) {
     $followed_by = $following->relationship->target->followed_by; //The $user is followed by the authenticating 
     $following = $following->relationship->target->following;
   $name = theme('full_name', $user);
-  $full_avatar = str_replace('_normal.', '.', $user->profile_image_url);
+  $full_avatar = str_replace('_normal.', '.', theme_get_avatar($user));
   $link = theme('external_link', $user->url);
   //Some locations have a prefix which should be removed (UbertTwitter and iPhone)
   //Sorry if my PC has converted from UTF-8 with the U (artesea)
@@ -1521,7 +1523,7 @@ function theme_user_header($user) {
   $username = user_current_username();
    $out = "<div class='profile'>";
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-   $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), $name)."</span>";
+   $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), $name)."</span>";
    }
   $out .= "<span class='status shift'><span class='textb'>{$name}</span><br />";
   $out .= "<span class='about'>";
@@ -1722,7 +1724,7 @@ function twitter_standard_timeline($feed, $source) {
     'from' => (object) array(
       'id' => $status->from_user_id,
       'screen_name' => $status->from_user,
-      'profile_image_url' => $status->profile_image_url,
+      'profile_image_url' => theme_get_avatar($status),
     ),
     'to' => (object) array(
       'id' => $status->to_user_id,
@@ -1851,7 +1853,7 @@ function theme_timeline($feed)
       $link = theme('status_time_link', $status, !$status->is_direct);
     }
       $actions = theme('action_icons', $status);
-      $avatar = theme('avatar', $status->from->profile_image_url, htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+      $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
     if (setting_fetch('buttonfrom', 'yes') == 'yes') {
   if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
     $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
@@ -1957,7 +1959,7 @@ function theme_followers($feed, $hide_pagination = false) {
     $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
+    $rows[] = array('data' => array(array('data' => theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
       array('data' => $content, 'class' => 'status shift')),
   'class' => 'tweet');
   } else {
@@ -2000,7 +2002,7 @@ function theme_blockings($feed, $hide_pagination = false) {
     $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-    $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
+    $rows[] = array('data' => array(array('data' => theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
       array('data' => $content, 'class' => 'status shift')),
   'class' => 'tweet');
   } else {
@@ -2045,7 +2047,7 @@ function theme_retweeters($feed, $hide_pagination = false) {
                 $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
-                $rows[] = array('data' => array(array('data' => theme('avatar', $user->profile_image_url, htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
+                $rows[] = array('data' => array(array('data' => theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
                           array('data' => $content, 'class' => 'status shift')),
                                 'class' => 'tweet');
   } else {
@@ -2071,6 +2073,24 @@ function theme_full_name($user) {
   return $name;
 }
 
+// http://groups.google.com/group/twitter-development-talk/browse_thread/thread/50fd4d953e5b5229#
+function theme_get_avatar($object) {
+        // Are we calling the HTTPS API?        
+        $pos = strpos(API_URL, "https");
+
+        // Not useing HTTPS? Return the normal one
+        if ($pos === false) {
+                return $object->profile_image_url;
+        }
+
+        // Is there a secure image to return?
+        if ($object->profile_image_url_https) {
+                return $object->profile_image_url_https;
+        }
+
+        return $object->profile_image_url;
+}
+
 function theme_no_tweets() {
   return '<p>No tweets to display.</p>';
 }
@@ -2084,7 +2104,7 @@ function theme_search_results($feed) {
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
     $row = array(
-      theme('avatar', $status->profile_image_url, htmlspecialchars($status->name, ENT_QUOTES, 'UTF-8')),
+      theme('avatar', theme_get_avatar($status), htmlspecialchars($status->name, ENT_QUOTES, 'UTF-8')),
       "<a href='user/{$status->from_user}'>{$status->from_user}</a> $actions - {$link}<br />{$text}",
     );
   } else {
