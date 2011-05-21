@@ -17,37 +17,37 @@ function user_oauth() {
 
   // Session used to keep track of secret token during authorisation step
   session_start();
-  
+
   // Flag forces twitter_process() to use OAuth signing
   $GLOBALS['user']['type'] = 'oauth';
-  
+
   if ($oauth_token = $_GET['oauth_token']) {
     // Generate ACCESS token request
     $params = array('oauth_verifier' => $_GET['oauth_verifier']);
     $response = twitter_process('http://api.twitter.com/oauth/access_token', $params);
     parse_str($response, $token);
-    
+
     // Store ACCESS tokens in COOKIE
     $GLOBALS['user']['password'] = $token['oauth_token'] .'|'.$token['oauth_token_secret'];
-    
+
     // Fetch the user's screen name with a quick API call
     unset($_SESSION['oauth_request_token_secret']);
     $user = twitter_process('http://api.twitter.com/account/verify_credentials.json');
     $GLOBALS['user']['username'] = $user->screen_name;
-    
+
     _user_save_cookie(1);
     header('Location: '. BASE_URL);
     exit();
-    
+
   } else {
     // Generate AUTH token request
     $params = array('oauth_callback' => BASE_URL.'oauth');
     $response = twitter_process('http://api.twitter.com/oauth/request_token', $params);
     parse_str($response, $token);
-    
+
     // Save secret token to session to validate the result that comes back from Twitter
     $_SESSION['oauth_request_token_secret'] = $token['oauth_token_secret'];
-    
+
     // redirect user to authorisation URL
     $authorise_url = 'http://api.twitter.com/oauth/authorize?oauth_token='.$token['oauth_token'];
     header("Location: $authorise_url");
@@ -56,9 +56,9 @@ function user_oauth() {
 
 function user_oauth_sign(&$url, &$args = false) {
   require_once 'OAuth.php';
-  
+
   $method = $args !== false ? 'POST' : 'GET';
-  
+
   // Move GET parameters out of $url and into $args
   if (preg_match_all('#[?&]([^=]+)=([^&]+)#', $url, $matches, PREG_SET_ORDER)) {
     foreach ($matches as $match) {
@@ -66,7 +66,7 @@ function user_oauth_sign(&$url, &$args = false) {
     }
     $url = substr($url, 0, strpos($url, '?'));
   }
-  
+
   $sig_method = new OAuthSignatureMethod_HMAC_SHA1();
   $consumer = new OAuthConsumer(OAUTH_CONSUMER_KEY, OAUTH_CONSUMER_SECRET);
   $token = NULL;
@@ -79,10 +79,10 @@ function user_oauth_sign(&$url, &$args = false) {
   if ($oauth_token && $oauth_token_secret) {
     $token = new OAuthConsumer($oauth_token, $oauth_token_secret);
   }
-  
+
   $request = OAuthRequest::from_consumer_and_token($consumer, $token, $method, $url, $args);
   $request->sign_request($sig_method, $consumer, $token);
-  
+
   switch ($method) {
     case 'GET':
       $url = $request->to_url();
@@ -247,7 +247,7 @@ function user_login() {
 
 function theme_login() {
         $content = '<p><span class="textb">[1]<a href="oauth">Sign In with Twitter/OAuth</a></span> (from K-DTC)</p>
-<p>Twitter no longer allow you to log in directly with a username and password so we can\'t show the standard login form. There\'s some more information on the <a href="http://blog.dabr.co.uk/">Dabr blog</a>.</p>';
+<p>Twitter no longer allow you to log in directly with a username and password so we can\'t show the standard login form. There\'s some more information on the <a rel="external nofollow noreferrer" href="http://blog.dabr.co.uk/">Dabr blog</a>.</p>';
 
         if (ACCESS_USERS == 'MYSQL' || ACCESS_USERS == 'FILE') $content .= '<p class="textb">[2]No access to Twitter.com? <a href="login">Sign in with your Dabr account</a></p>';
 

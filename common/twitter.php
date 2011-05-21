@@ -521,7 +521,7 @@ function twitter_process($url, $post_data = false)
     }
 
     if (user_type() != 'oauth' && user_is_authenticated())
-    {  
+    {
   curl_setopt($ch, CURLOPT_USERPWD, user_current_username().':'.$GLOBALS['user']['password']);
     }
 
@@ -553,7 +553,11 @@ function twitter_process($url, $post_data = false)
       return $response;
   case 401:
       user_logout();
-      theme('error', "<p>Error: Login credentials incorrect.</p><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
+      if (DEBUG_MODE == 'ON') {
+        theme('error', "<p>Error: Login credentials incorrect.</p><p>{$response_info['http_code']}: {$response}</p><hr /><p>$url</p>");
+      } else {
+        theme('error', "<p>Error: Login credentials incorrect.</p><p>{$response_info['http_code']}: {$response}</p>");
+      }
   case 0:
       $result = $erno . ":" . $er . "<br />" ;
       /*
@@ -577,7 +581,11 @@ function twitter_process($url, $post_data = false)
     }
     */
       }
-      theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
+      if (DEBUG_MODE == 'ON') {
+        theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
+      } else {
+        theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p>");
+      }
     }
 }
 
