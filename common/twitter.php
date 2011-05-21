@@ -2094,12 +2094,12 @@ function theme_external_link($url, $content = null) {
   //Used to wordwrap long URLs
   //return "<a href='$url' target='_blank'>". wordwrap(long_url($url), 64, "\n", true) ."</a>";
     if (setting_fetch('linktrans') == 'yes') {
-    return "<a href='$lurl' rel='external noreferrer'>[link]</a>";
+    return "<a href='$lurl' rel='external nofollow noreferrer'>[link]</a>";
     } else {
-    return "<a href='$lurl' rel='external noreferrer'>$lurl</a>";
+    return "<a href='$lurl' rel='external nofollow noreferrer'>$lurl</a>";
     }
     } else {
-  return "<a href='$lurl' rel='external noreferrer'>$content</a>";
+  return "<a href='$lurl' rel='external nofollow noreferrer'>$content</a>";
     }
 }
 
