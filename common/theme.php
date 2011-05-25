@@ -230,6 +230,7 @@ function theme_css() {
   .sinput{width:40px;}
   .linput{width:112px;}
   .minput{width:20px;}
+  .ninput{width:90px;}
 </style>";
   return $t;
 }
