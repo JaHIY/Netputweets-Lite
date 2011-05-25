@@ -228,7 +228,7 @@ function theme_css() {
   hr{border:1px dotted  #{$c->bodyt};}
   .filter{text-decoration:none;}
   .sinput{width:40px;}
-  .linput{width:112px;}
+  .linput{width:120px;}
   .minput{width:20px;}
   .ninput{width:90px;}
 </style>";

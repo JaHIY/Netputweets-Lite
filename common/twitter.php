@@ -684,22 +684,19 @@ function twitter_parse_tags($input, $entities = false) {
 
     $out = $input;
 
-    if (setting_fetch('longurl') == 'yes'){
-    // Expand all URLs
-    foreach ($urls as $value)
-    {
-  $out = str_replace ($value, long_url($value) , $out) ;
-    }
-    }
-
-
         // Hyperlink the URLs 
         if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
         {
                 foreach($urls as $url) 
                 {
-                     $encoded = urlencode($url);
-                     $atext = link_trans($url);
+                     
+                     if (setting_fetch('longurl') == 'yes'){
+                        $lurl = long_url($url);
+                     } else {
+                        $lurl = $url;
+                     }
+                     $encoded = urlencode($lurl);
+                     $atext = link_trans($lurl);
                      $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
                 }
         } else {
@@ -709,7 +706,13 @@ function twitter_parse_tags($input, $entities = false) {
                                                 ->addLinksToURLs();
                         foreach($urls as $url) 
                         {
-                            $atext = link_trans($url);
+                            if (setting_fetch('longurl') == 'yes'){
+                                $lurl = long_url($url);
+                                $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
+                            } else {
+                                $lurl = $url;
+                            }
+                            $atext = link_trans($lurl);
                             $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
                         }
         }
