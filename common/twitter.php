@@ -160,7 +160,6 @@ menu_register(array(
 ));
 
 // Patch in multibyte support
-/*
 if (!function_exists('mb_substr')) {
     function mb_substr($str, $start, $len = '', $encoding="UTF-8"){
     $limit = strlen($str);
@@ -199,10 +198,9 @@ if (!function_exists('mb_substr')) {
     return substr($str, $s, $e - $s);
     }
 }
-*/
 
 function sysSubStr($String,$Length,$Append = false) {
-        if (function_exists('mb_substr') ? mb_strlen($String,'UTF-8') <= $Length : strlen(utf8_decode($String)) <= $Length) {
+        if (function_exists('mb_strlen') ? mb_strlen($String,'UTF-8') <= $Length : strlen(utf8_decode($String)) <= $Length) {
             return $String;
         }
         else
@@ -239,14 +237,9 @@ function sysSubStr($String,$Length,$Append = false) {
         }
 }
 
-
 function long_url($shortURL){
     $url = "http://api.longurl.org/v2/expand?format=json&url=" . $shortURL;
-    $curl_handle=curl_init();
-    curl_setopt($curl_handle,CURLOPT_RETURNTRANSFER,1);
-    curl_setopt($curl_handle,CURLOPT_URL,$url);
-    $url_json = curl_exec($curl_handle);
-    curl_close($curl_handle);
+    $url_json = twitter_fetch($url);
     $url_array = json_decode($url_json,true);
     $url_long = $url_array["long-url"];
     if ($url_long == null)
@@ -597,50 +590,52 @@ function twitter_url_shorten_callback($match) {
     if (preg_match('#http://www.flickr.com/photos/[^/]+/(\d+)/#', $match[0], $matches)) {
   return 'http://flic.kr/p/'.flickr_encode($matches[1]);
     }
- if (setting_fetch('short') == 'no') {
-      return $match[0];
-  } elseif (setting_fetch('short') == 'j.mp') {
-  if (BITLY_API_KEY == '' || BITLY_LOGIN == '') return $match[0];
-  $request = 'http://api.bit.ly/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
-  $json = json_decode(twitter_fetch($request));
-  if ($json->status_code == 200) {
-      $result = $json->data;
-      return $result->url;
-  } else {
-      return $match[0];
-  }
-    } elseif (setting_fetch('short') == 'goo.gl') {
-  $request = 'http://ggl-shortener.appspot.com/?url='.urlencode($match[0]);
-  $json = json_decode(twitter_fetch($request));//lzq
-  if (!isset($json->error_message)) {
-      return $json->short_url;
-  } else {
-      return $match[0];
-  }
-    } else {
-  $short_url_mapping = array(
-      '8.nf' => 'http://8.nf/api.php?format=simple&action=shorturl&url=',
-      'zi.mu' => 'http://zi.mu/api.php?format=simple&action=shorturl&url=',
-      'ye.pe' => 'http://ye.pe/api.php?format=simple&action=shorturl&url=',
-      'orz.se' => 'http://orz.se/api.php?format=simple&action=shorturl&url=',
-      'aa.cx' => 'http://aa.cx/api.php?url=',
-      'is.gd' => 'http://is.gd/api.php?longurl=',
-      's8.hk' => 'http://s8.hk/api/shorten?longUrl=',
-      'tinyurl.com' => 'http://tinyurl.com/api-create.php?url=',
-  );
-  foreach ($short_url_mapping as $setting => $url) {
-      if (setting_fetch('short') == $setting) {
-        $request = $url.urlencode($match[0]);
-        $links = twitter_fetch($request);
-        if (stripos($links, 'http://'.$setting) == 0) {
-            return $links;
-        } else {
+    switch (setting_fetch('short')) {
+        case 'no':
             return $match[0];
-        }
-      } else {
-        return $match[0];
-      }
-  }
+            break;
+        case 'j.mp':
+            if (BITLY_API_KEY == '' || BITLY_LOGIN == '') return $match[0];
+            $request = 'http://api.bit.ly/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
+            $json = json_decode(twitter_fetch($request));
+            switch ($json->status_code) {
+                case 200:
+                    $result = $json->data;
+                    return $result->url;
+                    break;
+                default:
+                    return $match[0];
+                    break;
+            }
+            break;
+        case 'goo.gl':
+            $request = 'http://ggl-shortener.appspot.com/?url='.urlencode($match[0]);
+            $json = json_decode(twitter_fetch($request));//lzq
+            $result = (!isset($json->error_message)) ? $json->short_url : $match[0];
+            return $result;
+            break;
+        default:
+            $short_url_mapping = array(
+                '8.nf' => 'http://8.nf/api.php?format=simple&action=shorturl&url=',
+                'zi.mu' => 'http://zi.mu/api.php?format=simple&action=shorturl&url=',
+                'ye.pe' => 'http://ye.pe/api.php?format=simple&action=shorturl&url=',
+                'orz.se' => 'http://orz.se/api.php?format=simple&action=shorturl&url=',
+                'aa.cx' => 'http://aa.cx/api.php?url=',
+                'is.gd' => 'http://is.gd/api.php?longurl=',
+                's8.hk' => 'http://s8.hk/api/shorten?longUrl=',
+                'tinyurl.com' => 'http://tinyurl.com/api-create.php?url='
+            );
+            foreach ($short_url_mapping as $setting => $url) {
+                if (setting_fetch('short') == $setting) {
+                    $request = $url.urlencode($match[0]);
+                    $links = twitter_fetch($request);
+                    $result = (stripos($links, 'http://'.$setting) == 0) ?  $links : $match[0];
+                    return $result;
+                } else {
+                    return $match[0];
+                }
+            }
+        break;
     }
 }
 
@@ -654,6 +649,22 @@ function twitter_fetch($url) {
   $response = curl_exec($ch);
   curl_close($ch);
   return $response;
+}
+
+function link_trans($url) {
+ switch (setting_fetch('linktrans', 'd')) {
+    case 'o':
+   $atext = $url;
+   break;
+    case 'd':
+   $urlpara = parse_url($url);
+   $atext = "[{$urlpara[host]}]";
+   break;
+    case 'l':
+   $atext = "[link]";
+   break;
+    }
+ return $atext;
 }
 
 function twitter_parse_tags($input, $entities = false) {
@@ -681,24 +692,26 @@ function twitter_parse_tags($input, $entities = false) {
     }
     }
 
+
         // Hyperlink the URLs 
         if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
         {
                 foreach($urls as $url) 
                 {
-                        $encoded = urlencode($url);
-                     if (setting_fetch('linktrans') == 'yes') {
-                        $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>[link]</a>", $out);
-                     } else {
-                        $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$url}</a>", $out);
-                     }
+                     $encoded = urlencode($url);
+                     $atext = link_trans($url);
+                     $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
                 }
-        } else 
-        {
+        } else {
                         $out = Twitter_Autolink::create($out)
                                                 ->setTarget('')
                                                 ->setTag('')
                                                 ->addLinksToURLs();
+                        foreach($urls as $url) 
+                        {
+                            $atext = link_trans($url);
+                            $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
+                        }
         }
 
         // Hyperlink the @ and lists
@@ -802,23 +815,36 @@ function twitter_status_page($query) {
 
   // Add Read It Later
     if(strcmp($query[2],'rl')==0){
-    $rl_api = "http://readitlaterlist.com/v2/add?username=".setting_fetch('rl_user','')."&password=".setting_fetch('rl_pass','')."&apikey=".READ_IT_LATER_API_KEY;
-    $rl_u = "http://twitter.com/".$status->user->screen_name."/status/".$status->id_str;
-    $rl_t = "Tweet+from+@".$status->user->screen_name.":+".urlencode($status->text);
+        $rl_api = "http://readitlaterlist.com/v2/add?username=".setting_fetch('rl_user','')."&password=".setting_fetch('rl_pass','')."&apikey=".READ_IT_LATER_API_KEY;
+        $rl_u = "http://twitter.com/".$status->user->screen_name."/status/".$status->id_str;
+        $rl_t = "Tweet+from+@".$status->user->screen_name.":+".urlencode($status->text);
 
-    $curl_url = "$rl_api&url=$rl_u&title=$rl_t";
+        $curl_url = "$rl_api&url=$rl_u&title=$rl_t";
 
-      $ch = curl_init( $curl_url );
-      curl_setopt( $ch, CURLOPT_RETURNTRANSFER, TRUE );
-      $ret = curl_exec( $ch );
-      curl_close( $ch );
-      if ( $ret == '200 OK' ){ $content .= "Tweet saved. Status: 200 OK";
-      } elseif ( $ret == '100' ) { $content .= "X-Limit-User-Limit. Error: 100";
-      } elseif ( $ret == '43' ) { $content .= "X-Limit-User-Remaining. Error: 43";
-      } elseif ( $ret == '25' ) { $content .= "X-Limit-User-Reset or X-Limit-Key-Reset. Error: 25";
-      } elseif ( $ret == '5000' ) { $content .= "X-Limit-Key-Limit. Error: 5000";
-      } elseif ( $ret == '3520' ) { $content .= "X-Limit-Key-Remaining. Error: 3520";
-      } else { $content .= "ERROR: instead of response code 200, we got: $ret.";}
+        $ret = twitter_fetch($curl_url);
+        switch ($ret) {
+        case '200 OK':
+            $content .= "Tweet saved. Status: 200 OK";
+            break;
+        case 100:
+            $content .= "X-Limit-User-Limit. Error: 100";
+            break;
+        case 43:
+            $content .= "X-Limit-User-Remaining. Error: 43";
+            break;
+        case 25:
+            $content .= "X-Limit-User-Reset or X-Limit-Key-Reset. Error: 25";
+            break;
+        case 5000:
+            $content .= "X-Limit-Key-Limit. Error: 5000";
+            break;
+        case 3520:
+            $content .= "X-Limit-Key-Remaining. Error: 3520";
+            break;
+        default:
+            $content .= "ERROR: instead of response code 200, we got: $ret.";
+            break;
+        }
     }
 
 if(strcmp($query[2],'')==0){
@@ -1051,32 +1077,53 @@ function twitter_retweeters_page($tweet) {
 function twitter_update() {
   twitter_ensure_post_action();
   $status = twitter_url_shorten(stripslashes(trim($_POST['status'])));
+  $statusArr = array();
   if ($status) {
     $status = str_replace(array("\r\n", "\r"), "\n", $status);
-    $fixedtagspre = setting_fetch('fixedtagspre');
-    $fixedtagspost = setting_fetch('fixedtagspost');
-    empty($fixedtagspre) || $status = $fixedtagspre." ".$status;
-    empty($fixedtagspost) || $status .= " ".$fixedtagspost;
-    $status = sysSubStr($status,140,true);
+    $length = function_exists('mb_strlen') ? mb_strlen($status, 'utf-8') : strlen(utf8_decode($status));
+    if ($length > 140) {
+        switch (setting_fetch('longtext', 'r')) {
+            case 'a':
+                $statusArr[] = sysSubStr($status,140,true);
+                break;
+            case 'd':
+                $num = ceil($length / 100);
+                for ($i=0;$i<$num;$i++) {
+                    $cnum = $i + 1;
+                    $cstart = 100 * $i;
+                    $cend = 100 * ($i + 1);
+                    $statusArr[] = "($cnum/$num) ".mb_substr($status, $cstart, $cend, 'utf-8');
+                }
+                arsort($statusArr);
+                break;
+            case 'r':
+                $statusArr[] = $status;
+                break;
+        }
+    } else {
+        $statusArr[] = $status;
+    }
     $request = API_URL.'statuses/update.json';
-    $post_data = array('source' => 'dabr', 'status' => $status);
-    $in_reply_to_id = (string) $_POST['in_reply_to_id'];
-    if (is_numeric($in_reply_to_id)) {
-      $post_data['in_reply_to_status_id'] = $in_reply_to_id;
-    }
-  if (setting_fetch('buttongeo') == 'yes') {
-    // Geolocation parameters
-    list($lat, $long) = explode(',', $_POST['location']);
-    $geo = 'N';
-    if (is_numeric($lat) && is_numeric($long)) {
-      $geo = 'Y';
-      $post_data['lat'] = $lat;
-      $post_data['long'] = $long;
-      // $post_data['display_coordinates'] = 'false';
-    }
-    setcookie_year('geo', $geo);
-    }
+    foreach ($statusArr as $status) {
+        $post_data = array('source' => 'dabr', 'status' => $status);
+        $in_reply_to_id = (string) $_POST['in_reply_to_id'];
+        if (is_numeric($in_reply_to_id)) {
+            $post_data['in_reply_to_status_id'] = $in_reply_to_id;
+        }
+        if (setting_fetch('buttongeo') == 'yes') {
+            // Geolocation parameters
+            list($lat, $long) = explode(',', $_POST['location']);
+            $geo = 'N';
+            if (is_numeric($lat) && is_numeric($long)) {
+                $geo = 'Y';
+                $post_data['lat'] = $lat;
+                $post_data['long'] = $long;
+                // $post_data['display_coordinates'] = 'false';
+            }
+        setcookie_year('geo', $geo);
+        }
     $b = twitter_process($request, $post_data);
+    }
   }
   twitter_refresh($_POST['from'] ? $_POST['from'] : '');
 }
@@ -1112,12 +1159,12 @@ function twitter_retweets_page() {
 }
 
 function twitter_retweeted_page() {
-        $request = API_URL.'statuses/retweets_of_me.json?page='.intval($_GET['page']).'&include_entities=true';
-        $tl = twitter_process($request);
-        $tl = twitter_standard_timeline($tl, 'retweeted');
-        $content = theme('status_form');
-        $content .= theme('timeline',$tl);
-        theme('page', 'Retweeted', $content);
+  $request = API_URL.'statuses/retweets_of_me.json?page='.intval($_GET['page']).'&include_entities=true';
+  $tl = twitter_process($request);
+  $tl = twitter_standard_timeline($tl, 'retweeted');
+  $content = theme('status_form');
+  $content .= theme('timeline',$tl);
+  theme('page', 'Retweeted', $content);
 }
 
 function twitter_directs_page($query) {
@@ -1159,7 +1206,7 @@ function theme_directs_menu() {
 
 function theme_directs_form($to) {
   if ($to) {
-    
+
     if (friendship_exists($to) != 1)
     {
         if (strtolower($to) == strtolower(user_current_username()))
@@ -1277,7 +1324,7 @@ function twitter_user_page($query)
       $to_users = array_unique(array_merge($to_users, $found));
   }
     }
-    
+
     // Build a status message to everyone we're talking to
     $status = '';
     foreach ($to_users as $username) {
@@ -1285,7 +1332,7 @@ function twitter_user_page($query)
       $status .= "@{$username} ";
   }
     }
-    
+
     $content .= theme('status_form', $status, $in_reply_to_id);
     $content .= theme('user_header', $user);
     $content .= theme('timeline', $tl);
@@ -1328,7 +1375,7 @@ function twitter_home_page() {
     {
       $request .= '&max_id='.$_GET['max_id'];
     }
-    
+
     if ($_GET['since_id'])
     {
       $request .= '&since_id='.$_GET['since_id'];
@@ -1355,6 +1402,11 @@ function twitter_hashtag_page($query) {
 
 function theme_status_form($text = '', $in_reply_to_id = NULL) {
   if (user_is_authenticated()) {
+    $fixedtagspre = setting_fetch('fixedtagspre');
+    $fixedtagspost = setting_fetch('fixedtagspost');
+    $fixedtagspre = (!empty($fixedtagspre) && (setting_fetch('fixedtagspreo', 'no') == "yes") && ($text == '')) ? $fixedtagspre." " : NULL;
+    $fixedtagspost = (!empty($fixedtagspost) && (setting_fetch('fixedtagsposto', 'no') == "yes") && ($text == '')) ? " ".$fixedtagspost : NULL;
+    $text = $fixedtagspre.$text.$fixedtagspost;
     $output = "<form method='post' action='update'><fieldset><legend>What's Happening?</legend><div><input name='status' value='{$text}' maxlength='140' /> <input name='in_reply_to_id' value='{$in_reply_to_id}' type='hidden' /><button type='submit'>Tweet</button>";
     if (setting_fetch('buttongeo') == 'yes') {
       $output .= '<div><span id="geo" style="display: none;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
@@ -1363,25 +1415,25 @@ function theme_status_form($text = '', $in_reply_to_id = NULL) {
 started = false;
 chkbox = document.getElementById("geoloc");
 if (navigator.geolocation) {
-	geoStatus("Tweet my location");
-	if ("'.$_COOKIE['geo'].'"=="Y") {
-		chkbox.checked = true;
-		goGeo();
-	}
+    geoStatus("Tweet my location");
+    if ("'.$_COOKIE['geo'].'"=="Y") {
+        chkbox.checked = true;
+        goGeo();
+    }
 }
 function goGeo(node) {
-	if (started) return;
-	started = true;
-	geoStatus("Locating...");
-	navigator.geolocation.getCurrentPosition(geoSuccess, geoStatus);
+    if (started) return;
+    started = true;
+    geoStatus("Locating...");
+    navigator.geolocation.getCurrentPosition(geoSuccess, geoStatus);
 }
 function geoStatus(msg) {
-	document.getElementById("geo").style.display = "inline";
-	document.getElementById("lblGeo").innerHTML = msg;
+    document.getElementById("geo").style.display = "inline";
+    document.getElementById("lblGeo").innerHTML = msg;
 }
 function geoSuccess(position) {
-	geoStatus("Tweet my <a href=\'http://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
-	chkbox.value = position.coords.latitude + "," + position.coords.longitude;
+    geoStatus("Tweet my <a href=\'http://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
+    chkbox.value = position.coords.latitude + "," + position.coords.longitude;
 }
 //-->
   </script></div>';
@@ -1423,8 +1475,7 @@ function theme_retweet($status)
   );
   $text = str_replace(array_keys($replace),array_values($replace),$rtsyntax);
 
-    $length = function_exists('mb_strlen') ? mb_strlen($text,'UTF-8') : strlen($text);
-    $length = !function_exists('mb_strlen') ? strlen(utf8_decode($text)) : strlen($text);
+    $length = function_exists('mb_strlen') ? mb_strlen($text,'UTF-8') : strlen(utf8_decode($text));
     $from = substr($_SERVER['HTTP_REFERER'], strlen(BASE_URL));
     
     if($status->user->protected == 0)
@@ -1775,6 +1826,16 @@ function twitter_user_info($username = null) {
   return $user;
 }
 
+function twitter_timeline_filter($input) {
+    $filter_keywords = explode(" ",setting_fetch('filterc'));
+    foreach ($filter_keywords as $filter_keyword) {
+        if (stripos($input, $filter_keyword)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function theme_timeline($feed)
 {
     if (count($feed) == 0) return theme('no_tweets');
@@ -1812,7 +1873,11 @@ function theme_timeline($feed)
     {
     $date = $status->created_at;
       }
+      if ((setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($status->text)) {
+      $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
+    } else {
       $text = twitter_parse_tags($status->text, $status->entities);
+    }
     if (setting_fetch('buttontime', 'yes') == 'yes') {
       $link = theme('status_time_link', $status, !$status->is_direct);
     }
@@ -2101,11 +2166,8 @@ function theme_external_link($url, $content = null) {
     if (!$content) {
   //Used to wordwrap long URLs
   //return "<a href='$url' target='_blank'>". wordwrap(long_url($url), 64, "\n", true) ."</a>";
-    if (setting_fetch('linktrans') == 'yes') {
-    return "<a href='$lurl' rel='external nofollow noreferrer'>[link]</a>";
-    } else {
-    return "<a href='$lurl' rel='external nofollow noreferrer'>$lurl</a>";
-    }
+    $atext = link_trans($lurl);
+    return "<a href='$lurl' rel='external nofollow noreferrer'>$atext</a>";
     } else {
   return "<a href='$lurl' rel='external nofollow noreferrer'>$content</a>";
     }

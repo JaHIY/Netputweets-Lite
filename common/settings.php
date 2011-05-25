@@ -61,12 +61,29 @@ function setcookie_year($name, $value) {
     setcookie($name, $value, $duration, '/');
 }
 
+function check_input($value)
+{
+// 去除斜杠
+if (get_magic_quotes_gpc())
+  {
+  $value = stripslashes($value);
+  }
+// 如果不是数字则加引号
+if (!is_numeric($value))
+  {
+  $value = "'" . mysql_real_escape_string($value) . "'";
+  }
+return $value;
+}
+
 function settings_page($args) {
   if ($args[1] == 'save') {
     $settings['browser'] = $_POST['browser'];
     $settings['gwt'] = $_POST['gwt'];
     $settings['colours'] = $_POST['colours'];
     $settings['reverse'] = $_POST['reverse'];
+        $settings['tpp'] = $_POST['tpp'];
+        $settings['ltpp'] = $_POST['ltpp'];
         $settings['topuser'] = $_POST['topuser'];
         $settings['tophome'] = $_POST['tophome'];
         $settings['topreplies'] = $_POST['topreplies'];
@@ -118,7 +135,9 @@ function settings_page($args) {
         $settings['longurl'] = $_POST['longurl'];
         //$settings['showthumbs'] = $_POST['showthumbs'];
         $settings['fixedtagspre'] = $_POST['fixedtagspre'];
+        $settings['fixedtagspreo'] = $_POST['fixedtagspreo'];
         $settings['fixedtagspost'] = $_POST['fixedtagspost'];
+        $settings['fixedtagsposto'] = $_POST['fixedtagsposto'];
         $settings['ctrlenter'] = $_POST['ctrlenter'];
         $settings['rtsyntax'] = $_POST['rtsyntax'];
         $settings['css'] = $_POST['css'];
@@ -127,39 +146,63 @@ function settings_page($args) {
         $settings['utc_offset']  = (float)$_POST['utc_offset'];
         $settings['rl_user'] = $_POST['rl_user'];
         $settings['rl_pass'] = $_POST['rl_pass'];
+        $settings['longtext'] = $_POST['longtext'];
+        $settings['filtero'] = $_POST['filtero'];
+        $settings['filterc'] = $_POST['filterc'];
 
                 // Save a user's oauth details to a MySQL table
-                if (ACCESS_USERS == 'MYSQL' && $newpass = $_POST['newpassword']) {
-                        user_is_authenticated();
+                if (ACCESS_USERS == 'MYSQL') {
+                  if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
+                    user_is_authenticated();
+                    $con = @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
+                    @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
+                    if ($newpass = $_POST['newpassword']) {
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
-                        @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
-                        @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
-                        $sql = sprintf("REPLACE INTO user (username, oauth_key, oauth_secret, password) VALUES ('%s', '%s', '%s', MD5('%s'))",  mysql_escape_string(user_current_username()), mysql_escape_string($key), mysql_escape_string($secret), mysql_escape_string($newpass));
+                        $sql = sprintf("REPLACE INTO user (username, oauth_key, oauth_secret, password) VALUES (%s, %s, %s, MD5(%s))", check_input(user_current_username()), check_input($key), check_input($secret), check_input($newpass));
                         @mysql_query($sql) || theme('error', '<p>Error failed to save your OAuth Information into your MySQL Database.</p><p>Please check your MySQL Database.</p>');
+                    }
+                    if ($delpass = $_POST['delpass']) {
+                        $username = check_input(user_current_username());
+                        $del = "DELETE FROM user WHERE username = $username";
+                        @mysql_query($del) || theme('error', '<p>Error failed to delete your account.</p>');
+                    }
+                    mysql_close($con);
+                  }
                 }
 
                 // Save a user's oauth details to a file
-                if (ACCESS_USERS == 'FILE' && $newpass = $_POST['newpassword']) {
-                        user_is_authenticated();
+                if (ACCESS_USERS == 'FILE') {
+                    if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
+                      user_is_authenticated();
+                      $username = strtolower(user_current_username());
+                      $token = @glob(CACHE_FLODER.$username.'.*');
+                      if ($newpass = $_POST['newpassword']) {
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
                         $user = array(
                             'password' => md5($newpass),
                             'oauth_key' => $key, 
                             'oauth_secret' => $secret);
-                        $username = strtolower(user_current_username());
-                        for ($i=0; $i<15; $i++) {
-                            $d=rand(1,30)%2;
-                            $suffix .= $d ? chr(rand(65,90)) : chr(rand(48,57));
-                        }
-                        $token = glob(CACHE_FLODER.$username.'.*');
                         if(!empty($token)) {
                             $str = $token[0];
                         } else {
+                            for ($i=0; $i<15; $i++) {
+                                $d=rand(1,30)%2;
+                                $suffix .= $d ? chr(rand(65,90)) : chr(rand(48,57));
+                            }
                             $str = CACHE_FLODER.$username.'.'.$suffix;
                         }
                         if(@file_put_contents($str,json_encode($user)) === FALSE) {
                             theme('error', '<p>Error failed to write access_token file.</p><p>Please check if you have write permission to cache directory.</p>');
                         }
+                      }
+                      if ($delpass = $_POST['delpass']) {
+                        if(!empty($token)) {
+                            unlink($token[0]);
+                        } else {
+                            theme('error', '<p>Error failed to delete access_token file.</p>');
+                        }
+                      }
+                    }
                 }
 
     setcookie_year('settings', base64_encode(serialize($settings)));
@@ -195,15 +238,6 @@ function settings_page($args) {
     'yes' => 'Yes',
   );
 
-  $tpp = array(
-    20 => '20',
-    40 => '40',
-    60 => '60',
-    80 => '80',
-    120 => '120',
-    200 => '200',
-  );
-
   $short = array(
     'no' => 'Not using',
     'aa.cx' => 'aa.cx',
@@ -217,6 +251,18 @@ function settings_page($args) {
     'tinyurl.com' => 'tinyurl.com',
     'j.mp' => 'j.mp',
   );
+
+$linktrans = array(
+    'o' => 'Full URL',
+    'd' => 'Domain Only',
+    'l' => '[link]',
+);
+
+$longtext = array(
+    'a' => 'Automatic Cut',
+    'd' => 'Split into 2+ tweets',
+    'r' => 'Return Error',
+);
 
   $colour_schemes = array();
   foreach ($GLOBALS['colour_schemes'] as $id => $info) {
@@ -265,7 +311,7 @@ function settings_page($args) {
   $content .= '<label><input type="checkbox" name="ssettings" value="yes" '. (setting_fetch('ssettings', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Settings</label><br />';
   $content .= '<label><input type="checkbox" name="slogout" value="yes" '. (setting_fetch('slogout', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Logout</label><br />';
   $content .= '<label><input type="checkbox" name="srefresh" value="yes" '. (setting_fetch('srefresh') == 'yes' ? ' checked="checked" ' : '') .' /> Refresh</label></p><hr />';
-  $content .= '<span class="texts">And Choose What you Want to Display On each Status.</span><br />';
+  $content .= '<p><span class="texts">And Choose What you Want to Display On each Status.</span><br />';
   $content .= '<label><input type="checkbox" name="buttonrl" value="yes" '. (setting_fetch('buttonrl', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> RL [Read It Later]</label>';
   $content .= '<label><input type="checkbox" name="buttonre" value="yes" '. (setting_fetch('buttonre', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> AT [@]</label>';
   $content .= '<label><input type="checkbox" name="buttonreall" value="yes" '. (setting_fetch('buttonreall', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> RE [Reply All]</label>';
@@ -279,35 +325,38 @@ function settings_page($args) {
   $content .= '<label><input type="checkbox" name="buttonsearch" value="yes" '. (setting_fetch('buttonsearch', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> ? [Search for @ to a user]</label>';
   $content .= '<label><input type="checkbox" name="buttongeo" value="yes" '. (setting_fetch('buttongeo') == 'yes' ? ' checked="checked" ' : '') .' /> GEO [Geolocation]</label><br />';
   $content .= '<label><input type="checkbox" name="buttontime" value="yes" '. (setting_fetch('buttontime', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status Times</label>';
-  $content .= '<label><input type="checkbox" name="buttonfrom" value="yes" '. (setting_fetch('buttonfrom', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status From</label></p><hr>';
-  $content .= '<p><label><input type="checkbox" name="avataro" value="yes" '. (setting_fetch('avataro', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Disable Avatar</label></p><hr>';
-  $content .= '<p>Tweets per page (20-200): <input type="text" id="tpp" name="tpp" value="'.setting_fetch('tpp', 20).'" maxlength="3" style="width:20px;"/></p><hr />';
-  
-  $content .= '<p>List tweets per page (20-200): <input type="text" id="ltpp" name="ltpp" value="'.setting_fetch('ltpp', 20).'" maxlength="3" style="width:20px;"/></p><hr />';
-  
-  $content .= '</select></p><p>External links go:<br /><select name="gwt">';
+  $content .= '<label><input type="checkbox" name="buttonfrom" value="yes" '. (setting_fetch('buttonfrom', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status From</label></p><hr />';
+  $content .= '<p><label><input type="checkbox" name="avataro" value="yes" '. (setting_fetch('avataro', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Disable Avatar</label></p><hr />';
+  $content .= '<p>Tweets per page (20-200): <input type="text" id="tpp" name="tpp" value="'.setting_fetch('tpp', 20).'" size="3" maxlength="3" class="minput" /></p><hr />';
+
+  $content .= '<p>List tweets per page (20-200): <input type="text" id="ltpp" name="ltpp" value="'.setting_fetch('ltpp', 20).'" size="3" maxlength="3" class="minput" /></p><hr />';
+
+  $content .= '<p><label>External links go:<br /><select name="gwt">';
   $content .= theme('options', $gwt, setting_fetch('gwt', $GLOBALS['current_theme'] == 'text' ? 'on' : 'off'));
-  $content .= '<span class="texts"><br />Google Web Transcoder (GWT) converts third-party sites into small, speedy pages suitable for older phones and people with less bandwidth.</span></p>';
-  $content .= '<p><label><input type="checkbox" name="linktrans" value="yes" '. (setting_fetch('linktrans') == 'yes' ? ' checked="checked" ' : '') .' /> Change URL to [link]</label></p><hr />';
+  $content .= '</select></label><span class="texts"><br />Google Web Transcoder (GWT) converts third-party sites into small, speedy pages suitable for older phones and people with less bandwidth.</span></p>';
+  $content .= '<p><label>Showing URL:<br /><select name="linktrans">'.theme('options', $linktrans, setting_fetch('linktrans', 'd')).'</select></label><br /><span class="texts">Note: Domain Only means change https://twitter.com/'.strtolower(user_current_username()).' to [twitter.com]</span></p><hr />';
   $content .= '<p>Use Read It Later<br />Email address or username: <input type="text" name="rl_user" value="'. setting_fetch('rl_user', '').'" /><br />';
   $content .= 'Password, if you have one.: <input type="password" name="rl_pass" value="'. setting_fetch('rl_pass', '').'" /></p><hr />';
-  $content .= '<p>Short URL Services:<br /><select name="short">'.theme('options', $short, setting_fetch('short', '8.nf')).'</select></p><hr />';
+  $content .= '<p><label>Short URL Services:<br /><select name="short">'.theme('options', $short, setting_fetch('short', '8.nf')).'</select></label></p><hr />';
   $content .= '<p><label><input type="checkbox" name="longurl" value="yes" '. (setting_fetch('longurl') == 'yes' ? ' checked="checked" ' : '') .' /> Show Long URL</label></p><hr />';
-//  $content .= '<p><label><input type="checkbox" name="showthumbs" value="yes" '. (setting_fetch('showthumbs', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Preview Photos In Timelines</label></p><hr>';
-  $content .= '<p>Fixed Tags: <input type="text" id="fixedtagspre" name="fixedtagspre" value="'.setting_fetch('fixedtagspre').'" maxlength="70" style="width:40px;" /> Tweet Content <input type="text" id="fixedtagspost" name="fixedtagspost" value="'.setting_fetch('fixedtagspost').'" maxlength="70" style="width:40px;" /><br /><span class="texts">Intro: Add Tags in Your Tweets</span></p><hr />';
-  $content .= '<p>RT Syntax:<br /><input type="text" id="rtsyntax" name="rtsyntax" value="'.setting_fetch('rtsyntax', 'RT [User]: [Content]').'" maxlength="140" /><br /><span class="texts">Default RT Syntax: RT [User]: [Content]</span></p><hr />';
+//  $content .= '<p><label><input type="checkbox" name="showthumbs" value="yes" '. (setting_fetch('showthumbs', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Preview Photos In Timelines</label></p><hr />';
+  $content .= '<p><label><input type="checkbox" name="fixedtagsposto" value="yes" '. (setting_fetch('fixedtagsposto', 'no') == 'yes' ? ' checked="checked" ' : '') .' /> Tweet Content [At the beginning of your tweets]:</label> <input type="text" id="fixedtagspost" name="fixedtagspost" value="'.setting_fetch('fixedtagspost').'" maxlength="70" class="sinput" /><br />';
+  $content .= '<label><input type="checkbox" name="fixedtagspreo" value="yes" '. (setting_fetch('fixedtagspreo', 'no') == 'yes' ? ' checked="checked" ' : '') .' /> Fixed Tags [At the end of your tweets]:</label> <input type="text" id="fixedtagspre" name="fixedtagspre" value="'.setting_fetch('fixedtagspre').'" maxlength="70" class="sinput" /><br /><span class="texts">Intro: Add Tags in Your Tweets</span></p><hr />';
+  $content .= '<p><label>RT Syntax:<br /><input type="text" id="rtsyntax" name="rtsyntax" value="'.setting_fetch('rtsyntax', 'RT [User]: [Content]').'" maxlength="140" class="linput" /></label><br /><span class="texts">Default RT Syntax: RT [User]: [Content]</span></p><hr />';
+  $content .= '<p><label>When posting a 140+ chars tweet:<br /><select name="longtext">'.theme('options', $longtext, setting_fetch('longtext', 'r')).'</select></label></p><hr />';
+  $content .= '<p><label><input type="checkbox" name="filtero" value="yes" '. (setting_fetch('filtero', 'no') == 'yes' ? ' checked="checked" ' : '') .' /> Keyword Filter:</label> <input type="text" id="filterc" name="filterc" value="'.setting_fetch('filterc').'" maxlength="140" class="linput" /><br /><span class="texts">Note: Separate keywords with space</span></p><hr />';
   $content .= '<p><label><input type="checkbox" name="reverse" value="yes" '. (setting_fetch('reverse') == 'yes' ? ' checked="checked" ' : '') .' /> Attempt to reverse the conversation thread view.</label></p>';
   $content .= '<p><label><input type="checkbox" name="timestamp" value="yes" '. (setting_fetch('timestamp') == 'yes' ? ' checked="checked" ' : '') .' /> Show the timestamp ' . twitter_date('H:i') . ' instead of 25 sec ago</label></p>';
   $content .= '<p><label><input type="checkbox" name="hide_inline" value="yes" '. (setting_fetch('hide_inline') == 'yes' ? ' checked="checked" ' : '') .' /> Hide inline media (eg TwitPic thumbnails)</label></p>';
-  $content .= '<p><label>The time in UTC is currently ' . gmdate('H:i') . ', by using an offset of <input type="text" name="utc_offset" value="'. $utc_offset .'" size="3" /> we display the time as ' . twitter_date('H:i') . '.<br />It is worth adjusting this value if the time appears to be wrong.</label></p>';
+  $content .= '<p><label>The time in UTC is currently ' . gmdate('H:i') . ', by using an offset of <input type="text" name="utc_offset" value="'. $utc_offset .'" size="3" maxlength="3" class="minput" /> we display the time as ' . twitter_date('H:i') . '.<br />It is worth adjusting this value if the time appears to be wrong.</label></p>';
 
         // Allow users to choose a Dabr password if accounts are enabled
         if ((ACCESS_USERS == 'MYSQL' || ACCESS_USERS == 'FILE') && user_is_authenticated()) {
-          $content .= '<fieldset><legend>Dabr account</legend><span class="texts">If you want to sign in to Dabr without going via Twitter.com in the future, create a password and we\'ll remember you.</span></p><p>Change Dabr password<br /><input type="password" name="newpassword" /><br /><small>Leave blank if you don\'t want to change it</small></fieldset>';
+          $content .= '<fieldset><legend>Dabr account</legend><span class="texts">If you want to sign in to Dabr without going via Twitter.com in the future, create a password and we\'ll remember you.</span><p><label>Change Dabr password<br /><input type="password" name="newpassword" maxlength="140" class="linput" /></label><br /><span class="texts">Leave blank if you don\'t want to change it</span><br /><label><input type="checkbox" name="delpass" value="yes" /> Delete my Dabr account, please.</label></p></fieldset>';
         }
   $content .= '<p><button type="submit">Save</button></p></form>';
-  
+
   $content .= '<hr /><p>Visit <a href="reset">Reset</a> if things go horribly wrong - it will log you out and clear all settings.</p>';
-  
+
   return theme('page', 'Settings', $content);
 }

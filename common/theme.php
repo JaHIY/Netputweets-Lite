@@ -151,12 +151,6 @@ echo    '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://w
 <meta name="viewport" content="width=device-width; initial-scale=1.0;" />
 </head>
 <body>';
-if (file_exists("common/admob.php"))
-{
-echo '<div class=\"advert\">';
-require_once("common/admob.php");
-echo '</div>';
-}
 echo $body;
 if (setting_fetch('browser') == 'desktop') {
 echo '<script type="text/javascript">
@@ -232,6 +226,10 @@ function theme_css() {
   #about{margin:0.5em;padding:0.1em 1em;}
   fieldset{border:1px dashed #{$c->bodyt};}
   hr{border:1px dotted  #{$c->bodyt};}
+  .filter{text-decoration:none;}
+  .sinput{width:40px;}
+  .linput{width:112px;}
+  .minput{width:20px;}
 </style>";
   return $t;
 }

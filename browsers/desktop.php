@@ -1,6 +1,11 @@
 <?php
 function desktop_theme_status_form($text = '', $in_reply_to_id = NULL) {
   if (user_is_authenticated()) {
+    $fixedtagspre = setting_fetch('fixedtagspre');
+    $fixedtagspost = setting_fetch('fixedtagspost');
+    $fixedtagspre = (!empty($fixedtagspre) && (setting_fetch('fixedtagspreo', 'no') == "yes") && ($text == '')) ? $fixedtagspre." " : NULL;
+    $fixedtagspost = (!empty($fixedtagspost) && (setting_fetch('fixedtagsposto', 'no') == "yes") && ($text == '')) ? " ".$fixedtagspost : NULL;
+    $text = $fixedtagspre.$text.$fixedtagspost;
     $output = '<form method="post" action="update">
   <fieldset><legend>What\'s Happening?</legend>
   <div><textarea id="status" name="status" rows="3" cols="60">'.$text.'</textarea>
