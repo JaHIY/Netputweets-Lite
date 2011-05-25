@@ -150,6 +150,7 @@ function settings_page($args) {
         $settings['filtero'] = $_POST['filtero'];
         $settings['filterc'] = $_POST['filterc'];
 
+                $username = strtolower(user_current_username());
                 // Save a user's oauth details to a MySQL table
                 if (ACCESS_USERS == 'MYSQL') {
                   if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
@@ -158,12 +159,12 @@ function settings_page($args) {
                     @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
                     if ($newpass = $_POST['newpassword']) {
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
-                        $sql = sprintf("REPLACE INTO user (username, oauth_key, oauth_secret, password) VALUES (%s, %s, %s, MD5(%s))", check_input(user_current_username()), check_input($key), check_input($secret), check_input($newpass));
+                        $sql = sprintf("REPLACE INTO user (username, oauth_key, oauth_secret, password) VALUES (%s, %s, %s, MD5(%s))", check_input($username), check_input($key), check_input($secret), check_input($newpass));
                         @mysql_query($sql) || theme('error', '<p>Error failed to save your OAuth Information into your MySQL Database.</p><p>Please check your MySQL Database.</p>');
                     }
                     if ($delpass = $_POST['delpass']) {
-                        $username = check_input(user_current_username());
-                        $del = "DELETE FROM user WHERE username = $username";
+                        user_is_authenticated();
+                        $del = "DELETE FROM user WHERE username = ".check_input($username);
                         @mysql_query($del) || theme('error', '<p>Error failed to delete your account.</p>');
                     }
                     mysql_close($con);
@@ -174,7 +175,6 @@ function settings_page($args) {
                 if (ACCESS_USERS == 'FILE') {
                     if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
                       user_is_authenticated();
-                      $username = strtolower(user_current_username());
                       $token = @glob(CACHE_FLODER.$username.'.*');
                       if ($newpass = $_POST['newpassword']) {
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
@@ -196,6 +196,7 @@ function settings_page($args) {
                         }
                       }
                       if ($delpass = $_POST['delpass']) {
+                        user_is_authenticated();
                         if(!empty($token)) {
                             unlink($token[0]);
                         } else {
@@ -334,7 +335,7 @@ $longtext = array(
   $content .= '<p><label>External links go:<br /><select name="gwt">';
   $content .= theme('options', $gwt, setting_fetch('gwt', $GLOBALS['current_theme'] == 'text' ? 'on' : 'off'));
   $content .= '</select></label><span class="texts"><br />Google Web Transcoder (GWT) converts third-party sites into small, speedy pages suitable for older phones and people with less bandwidth.</span></p>';
-  $content .= '<p><label>Showing URL:<br /><select name="linktrans">'.theme('options', $linktrans, setting_fetch('linktrans', 'd')).'</select></label><br /><span class="texts">Note: Domain Only means change https://twitter.com/'.strtolower(user_current_username()).' to [twitter.com]</span></p><hr />';
+  $content .= '<p><label>Showing URL:<br /><select name="linktrans">'.theme('options', $linktrans, setting_fetch('linktrans', 'd')).'</select></label><br /><span class="texts">Note: Domain Only means change https://twitter.com/JaHIY to [twitter.com]</span></p><hr />';
   $content .= '<p>Use Read It Later<br />Email address or username: <input type="text" name="rl_user" value="'. setting_fetch('rl_user', '').'" /><br />';
   $content .= 'Password, if you have one.: <input type="password" name="rl_pass" value="'. setting_fetch('rl_pass', '').'" /></p><hr />';
   $content .= '<p><label>Short URL Services:<br /><select name="short">'.theme('options', $short, setting_fetch('short', '8.nf')).'</select></label></p><hr />';

@@ -117,22 +117,23 @@ function user_is_authenticated() {
     }
   }
 
-         // Auto-logout any users that aren't correctly using OAuth
-        if (user_current_username() && user_type() !== 'oauth') {
-     user_logout();
-     twitter_refresh('logout');
-        }
+  // Auto-logout any users that aren't correctly using OAuth
+  if (user_current_username() && user_type() !== 'oauth') {
+    user_logout();
+    twitter_refresh('logout');
+  }
 
-        if (!user_current_username()) {
+  if (!user_current_username()) {
      if ($_POST['username'] && $_POST['password']) {
-  $GLOBALS['user']['username'] = trim($_POST['username']);
-  $GLOBALS['user']['password'] = $_POST['password'];
-                        $GLOBALS['user']['type'] = 'oauth';
+        $GLOBALS['user']['username'] = trim($_POST['username']);
+        $GLOBALS['user']['password'] = $_POST['password'];
+        $GLOBALS['user']['type'] = 'oauth';
 
-    if (ACCESS_USERS == 'MYSQL') {
+        $username = strtolower($GLOBALS['user']['username']);
+        if (ACCESS_USERS == 'MYSQL') {
                         $con = @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
                         @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
-$sql = sprintf("SELECT * FROM user WHERE username=%s AND password=MD5(%s) LIMIT 1", check_input($GLOBALS['user']['username']), check_input($GLOBALS['user']['password']));
+$sql = sprintf("SELECT * FROM user WHERE username=%s AND password=MD5(%s) LIMIT 1", check_input($username), check_input($GLOBALS['user']['password']));
                         $rs = @mysql_query($sql) or theme('error', '<p>Error failed to find your OAuth Information into your MySQL Database.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
                         if ($rs && ($user = mysql_fetch_object($rs))) {
                                 $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;
@@ -140,30 +141,29 @@ $sql = sprintf("SELECT * FROM user WHERE username=%s AND password=MD5(%s) LIMIT 
                                 theme('error', '<p>Invalid username or password.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
                         }
                         mysql_close($con);
-    }
-
-    if (ACCESS_USERS == 'FILE') {
-      $username = strtolower($GLOBALS['user']['username']);
-      $token = @glob(CACHE_FLODER.$username.'.*') or theme('error', '<p>No record.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
-      if(!empty($token)) {
-        $str = @file_get_contents($token[0]) or theme('error', '<p>Error failed to read access_token file.</p><p>Please check if you have read permission to access_token file.</p>');
-        $user = json_decode($str);
-        if ($user && md5($GLOBALS['user']['password']) == $user->password) {
-          $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;
-        } else {
-        theme('error', '<p>Invalid username or password.</p>');
         }
-      } else {
-        theme('error', '<p>Error failed to read cache directory.</p><p>Please check if you have read permission to cache directory.</p>');
-      }
-    }
+
+        if (ACCESS_USERS == 'FILE') {
+      $token = @glob(CACHE_FLODER.$username.'.*') or theme('error', '<p>No record.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
+            if(!empty($token)) {
+                $str = @file_get_contents($token[0]) or theme('error', '<p>Error failed to read access_token file.</p><p>Please check if you have read permission to access_token file.</p>');
+                $user = json_decode($str);
+                if ($user && md5($GLOBALS['user']['password']) == $user->password) {
+                    $GLOBALS['user']['password'] = $user->oauth_key . '|' . $user->oauth_secret;
+                } else {
+                    theme('error', '<p>Invalid username or password.</p>');
+                }
+            } else {
+                theme('error', '<p>Error failed to read cache directory.</p><p>Please check if you have read permission to cache directory.</p>');
+            }
+        }
   _user_save_cookie($_POST['stay-logged-in'] == 'yes');
   header('Location: '. BASE_URL);
   exit();
      } else {
   return false;
      }
-        }
+  }
 
   return true;
 }
