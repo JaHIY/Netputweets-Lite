@@ -1025,13 +1025,13 @@ function twitter_confirmed_page($query)
 
         switch ($action) {
                 case 'block':
-                        $content  = "<p><span class='status shift'>Bye-bye @$target - you are now <strong>blocked</strong>.</span></p>";
+                        $content = "<p>Bye-bye @$target - you are now <strong>blocked</strong>.</p>";
                         break;
                 case 'unblock':
-                        $content  = "<p><span class='status shift'>Hello again @$target - you have been <strong>unblocked</strong>.</span></p>";
+                        $content = "<p>Hello again @$target - you have been <strong>unblocked</strong>.</p>";
                         break;
                 case 'spam':
-                        $content = "<p><span class='status shift'>Yum! Yum! Yum! Delicious spam! Goodbye @$target.</span></p>";
+                        $content = "<p>Yum! Yum! Yum! Delicious spam! Goodbye @$target.</p>";
                         break;
         }
         theme ('Page', 'Confirmed', $content);
@@ -1301,11 +1301,44 @@ function twitter_user_page($query)
     if (is_numeric($in_reply_to_id)) {
   $tweet = twitter_find_tweet_in_timeline($in_reply_to_id, $tl);
 
+    // Create an array containing all URLs
+    $urls = Twitter_Extractor::create($tweet->text)
+                            ->extractURLs();
+
+    $out = $tweet->text;
+
     // Hyperlink the URLs (target _blank
-    $out = Twitter_Autolink::create($tweet->text)
-                                    ->setTarget('')
-                                    ->setTag('')
-                                    ->addLinksToURLs();
+    if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+    {
+        foreach($urls as $url) 
+        {
+
+            if (setting_fetch('longurl') == 'yes'){
+                $lurl = long_url($url);
+            } else {
+                $lurl = $url;
+            }
+            $encoded = urlencode($lurl);
+            $atext = link_trans($lurl);
+            $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
+        }
+    } else {
+        $out = Twitter_Autolink::create($out)
+                                        ->setTarget('')
+                                        ->setTag('')
+                                        ->addLinksToURLs();
+        foreach($urls as $url) 
+        {
+            if (setting_fetch('longurl') == 'yes'){
+                $lurl = long_url($url);
+                $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
+            } else {
+                $lurl = $url;
+            }
+            $atext = link_trans($lurl);
+            $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
+        }
+    }
 
                 // Hyperlink the @ and lists
     $out = Twitter_Autolink::create($out)
