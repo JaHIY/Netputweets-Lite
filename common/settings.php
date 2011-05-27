@@ -327,16 +327,16 @@ $longtext = array(
   $content .= '<label><input type="checkbox" name="buttontime" value="yes" '. (setting_fetch('buttontime', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status Times</label>';
   $content .= '<label><input type="checkbox" name="buttonfrom" value="yes" '. (setting_fetch('buttonfrom', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status From</label></p><hr />';
   $content .= '<p><label><input type="checkbox" name="avataro" value="yes" '. (setting_fetch('avataro', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Disable Avatar</label></p><hr />';
-  $content .= '<p>Tweets per page (20-200): <input type="text" id="tpp" name="tpp" value="'.setting_fetch('tpp', 20).'" size="3" maxlength="3" class="minput" /></p><hr />';
+  $content .= '<p><label>Tweets per page (20-200): <input type="text" id="tpp" name="tpp" value="'.setting_fetch('tpp', 20).'" size="3" maxlength="3" class="minput" /></label></p><hr />';
 
-  $content .= '<p>List tweets per page (20-200): <input type="text" id="ltpp" name="ltpp" value="'.setting_fetch('ltpp', 20).'" size="3" maxlength="3" class="minput" /></p><hr />';
+  $content .= '<p><label>List tweets per page (20-200): <input type="text" id="ltpp" name="ltpp" value="'.setting_fetch('ltpp', 20).'" size="3" maxlength="3" class="minput" /></label></p><hr />';
 
   $content .= '<p><label>External links go:<br /><select name="gwt">';
   $content .= theme('options', $gwt, setting_fetch('gwt', $GLOBALS['current_theme'] == 'text' ? 'on' : 'off'));
   $content .= '</select></label><span class="texts"><br />Google Web Transcoder (GWT) converts third-party sites into small, speedy pages suitable for older phones and people with less bandwidth.</span></p>';
   $content .= '<p><label>Showing URL:<br /><select name="linktrans">'.theme('options', $linktrans, setting_fetch('linktrans', 'd')).'</select></label><br /><span class="texts">Note: Domain Only means change https://twitter.com/JaHIY to [twitter.com]</span></p><hr />';
-  $content .= '<p>Use Read It Later<br />Email address or username: <input type="text" name="rl_user" value="'. setting_fetch('rl_user', '').'" size="25" class="linput" /><br />';
-  $content .= 'Password, if you have one.: <input type="password" name="rl_pass" value="'. setting_fetch('rl_pass', '').'" size="25" class="linput" /></p><hr />';
+  $content .= '<p><label>Use Read It Later<br />Email address or username: <input type="text" name="rl_user" value="'. setting_fetch('rl_user', '').'" size="25" class="linput" /></label><br />';
+  $content .= '<label>Password, if you have one.: <input type="password" name="rl_pass" value="'. setting_fetch('rl_pass', '').'" size="25" class="linput" /></label></p><hr />';
   $content .= '<p><label>Short URL Services:<br /><select name="short">'.theme('options', $short, setting_fetch('short', '8.nf')).'</select></label></p><hr />';
   $content .= '<p><label><input type="checkbox" name="longurl" value="yes" '. (setting_fetch('longurl') == 'yes' ? ' checked="checked" ' : '') .' /> Show Long URL</label></p><hr />';
 //  $content .= '<p><label><input type="checkbox" name="showthumbs" value="yes" '. (setting_fetch('showthumbs', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Preview Photos In Timelines</label></p><hr />';
