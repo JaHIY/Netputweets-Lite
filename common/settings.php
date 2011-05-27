@@ -63,12 +63,12 @@ function setcookie_year($name, $value) {
 
 function check_input($value)
 {
-// 去除斜杠
+// 鍘婚櫎鏂滄潬
 if (get_magic_quotes_gpc())
   {
   $value = stripslashes($value);
   }
-// 如果不是数字则加引号
+// 濡傛灉涓嶆槸鏁板瓧鍒欏姞寮曞彿
 if (!is_numeric($value))
   {
   $value = "'" . mysql_real_escape_string($value) . "'";
@@ -167,7 +167,6 @@ function settings_page($args) {
                         $del = "DELETE FROM user WHERE username = ".check_input($username);
                         @mysql_query($del) || theme('error', '<p>Error failed to delete your account.</p>');
                     }
-                    mysql_close($con);
                   }
                 }
 

@@ -140,7 +140,6 @@ $sql = sprintf("SELECT * FROM user WHERE username=%s AND password=MD5(%s) LIMIT 
                         } else {
                                 theme('error', '<p>Invalid username or password.</p><p>If this is your first time to use Dabr Password, please <a href="oauth">Sign in via Twitter.com</a> first. And then, visit the Dabr settings page to choose a password.</p>');
                         }
-                        mysql_close($con);
         }
 
         if (ACCESS_USERS == 'FILE') {
