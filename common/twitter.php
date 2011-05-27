@@ -1530,7 +1530,7 @@ function theme_user_header($user) {
     $following = $following->relationship->target->following;
   $name = theme('full_name', $user);
   $full_avatar = str_replace('_normal.', '.', theme_get_avatar($user));
-  $link = theme('external_link', $user->url);
+  $link = (isset($user->url)) ? theme('external_link', $user->url) : $user->url;
   //Some locations have a prefix which should be removed (UbertTwitter and iPhone)
   //Sorry if my PC has converted from UTF-8 with the U (artesea)
   $cleanLocation = str_replace(array("iPhone: ","üT: "),"",$user->location);
@@ -1552,8 +1552,8 @@ function theme_user_header($user) {
   $out .= '<strong>Private/Protected Tweets</strong><br />';
   }
   $out .= "Bio: {$bio}<br />";
-  $out .= "Link: {$link}<br />";
-  $out .= "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
+  $out .= (isset($user->url)) ? "Link: {$link}<br />" : "Link: No link to display.<br />";
+  $out .= (isset($user->location)) ? "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />" : "Location: No location to display.<br />";
   $out .= "Joined: {$date_joined} (~" . pluralise('tweet', $tweets_per_day, true) . " per day)";
   if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
     $out .= "<br /><strong>{$user->screen_name} ";
