@@ -29,7 +29,7 @@ function touch_theme_page($title, $content) {
       <meta name="viewport" content="width=device-width; initial-scale=1.0;" />
       <title>',$title,'</title>
       <base href="',BASE_URL,'" />
-      '.theme('css').'
+      ',theme('css'),'
             </head>
             <body id="thepage">';
         echo $body,

@@ -147,7 +147,7 @@ echo    '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://w
 <head>
 <title>',NETPUTWEETS_TITLE,' - ',$title,'</title>
 <base href="',BASE_URL,'" />
-'.$meta.theme('css').'
+',$meta,theme('css'),'
 <meta name="viewport" content="width=device-width; initial-scale=1.0;" />
 </head>
 <body>';
