@@ -150,11 +150,11 @@ function settings_page($args) {
         $settings['filtero'] = $_POST['filtero'];
         $settings['filterc'] = $_POST['filterc'];
 
-                $username = strtolower(user_current_username());
                 // Save a user's oauth details to a MySQL table
                 if (ACCESS_USERS == 'MYSQL') {
                   if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
                     user_is_authenticated();
+                    $username = strtolower(user_current_username());
                     $con = @mysql_connect(MYSQL_URL, MYSQL_USER, MYSQL_PASSWORD) || theme('error', '<p>Error failed to connect your MySQL Database.</p>');
                     @mysql_select_db(MYSQL_DB) || theme('error', '<p>Error failed to select your MySQL Database.</p>');
                     if ($newpass = $_POST['newpassword']) {
@@ -174,6 +174,7 @@ function settings_page($args) {
                 if (ACCESS_USERS == 'FILE') {
                     if ($newpass = $_POST['newpassword'] || $delpass = $_POST['delpass']) {
                       user_is_authenticated();
+                      $username = strtolower(user_current_username());
                       $token = @glob(CACHE_FLODER.$username.'.*');
                       if ($newpass = $_POST['newpassword']) {
                         list($key, $secret) = explode('|', $GLOBALS['user']['password']);
