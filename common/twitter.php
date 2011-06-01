@@ -526,7 +526,7 @@ function twitter_process($url, $post_data = false)
     curl_setopt($ch, CURLOPT_HEADER, FALSE);
 
     $response = curl_exec($ch);
-    $response_info=curl_getinfo($ch);
+    $response_info = curl_getinfo($ch);
     $erno = curl_errno($ch);
     $er = curl_error($ch);
     curl_close($ch);
@@ -640,14 +640,17 @@ function twitter_url_shorten_callback($match) {
 }
 
 function twitter_fetch($url) {
+  global $services_time;
   $ch = curl_init();
   curl_setopt($ch, CURLOPT_URL, $url);
   //curl_setopt($ch, CURLOPT_TIMEOUT, 10);
   $user_agent = "Mozilla/5.0 (compatible; dabr; " . BASE_URL . ")";
   curl_setopt($ch, CURLOPT_USERAGENT, $user_agent);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  $fetch_start = microtime(1);
   $response = curl_exec($ch);
   curl_close($ch);
+  $services_time += microtime(1) - $fetch_start;
   return $response;
 }
 
@@ -727,12 +730,6 @@ function twitter_parse_tags($input, $entities = false) {
         $out = Twitter_Autolink::create($out)
                                 ->setTarget('')
                                 ->addLinksToHashtags();
-
-
-  //if (setting_fetch('showthumbs', 'yes') == 'yes') {
-  //Add in images
-  $out = embedly_embed_thumbnails($out);
-    //}
 
     //Linebreaks.  Some clients insert \n for formatting.
     $out = nl2br($out);
@@ -1879,7 +1876,10 @@ function theme_timeline($feed)
     $page = menu_current_page();
     $date_heading = false;
     $first=0;
-       
+
+  //Add in images
+  embedly_embed_thumbnails($feed);
+
     foreach ($feed as $status)
     {
       if ($first==0)
