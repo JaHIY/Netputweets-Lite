@@ -238,13 +238,17 @@ function sysSubStr($String,$Length,$Append = false) {
 }
 
 function long_url($shortURL){
+    if (LONG_URL !== 'ON' || setting_fetch('longurl') !== 'yes')
+    {
+        return $shortURL;
+    }
     $url = "http://api.longurl.org/v2/expand?format=json&url=" . $shortURL;
     $url_json = twitter_fetch($url);
     $url_array = json_decode($url_json,true);
     $url_long = $url_array["long-url"];
     if ($url_long == null)
     {
-      return $shortURL;
+        return $shortURL;
     }
     return $url_long;
 }
@@ -670,6 +674,17 @@ function link_trans($url) {
  return $atext;
 }
 
+// http://dev.twitter.com/pages/tweet_entities
+function twitter_get_media($status) {
+    if($status->entities->media) {
+        $media_html = "<a href=\"" . $status->entities->media[0]->media_url_https . "\" rel='external nofollow noreferrer'>";
+        $media_html .=  "<img alt='' src=\"" . $status->entities->media[0]->media_url_https . ":thumb\" width=\"" . $status->entities->media[0]->sizes->thumb->w . "\" height=\"" . $status->entities->media[0]->sizes->thumb->h . "\" />";
+        $media_html .= "</a><br />";
+        return $media_html;
+    }
+}
+
+
 function twitter_parse_tags($input, $entities = false) {
 
         //Expanded t.co links to find thumbnails etc
@@ -693,7 +708,7 @@ function twitter_parse_tags($input, $entities = false) {
                 foreach($urls as $url) 
                 {
                      
-                     if (setting_fetch('longurl') == 'yes'){
+                     if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
                         $lurl = long_url($url);
                      } else {
                         $lurl = $url;
@@ -709,7 +724,7 @@ function twitter_parse_tags($input, $entities = false) {
                                                 ->addLinksToURLs();
                         foreach($urls as $url) 
                         {
-                            if (setting_fetch('longurl') == 'yes'){
+                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
                                 $lurl = long_url($url);
                                 $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
                             } else {
@@ -1310,7 +1325,7 @@ function twitter_user_page($query)
         foreach($urls as $url) 
         {
 
-            if (setting_fetch('longurl') == 'yes'){
+            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
                 $lurl = long_url($url);
             } else {
                 $lurl = $url;
@@ -1326,7 +1341,7 @@ function twitter_user_page($query)
                                         ->addLinksToURLs();
         foreach($urls as $url) 
         {
-            if (setting_fetch('longurl') == 'yes'){
+            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
                 $lurl = long_url($url);
                 $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
             } else {
@@ -1913,6 +1928,7 @@ function theme_timeline($feed)
       $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
     } else {
       $text = twitter_parse_tags($status->text, $status->entities);
+      $media = twitter_get_media($status);
     }
     if (setting_fetch('buttontime', 'yes') == 'yes') {
       $link = theme('status_time_link', $status, !$status->is_direct);
@@ -1944,7 +1960,7 @@ function theme_timeline($feed)
     $retweeted_by = $status->retweeted_by->user->screen_name;
      $source .= "<br /><a href='retweeted_by/{$status->id}'>retweeted</a> by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
     }
-    $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text} <span class='texts'>$source</span>";
+    $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text}<br />$media<span class='texts'>$source</span>";
       unset($row);
       $class = 'status';
 
@@ -2194,7 +2210,7 @@ function theme_search_form($query) {
 
 function theme_external_link($url, $content = null) {
     //Long URL functionality.  Also uncomment function long_url($shortURL)
-    if (setting_fetch('longurl') == 'yes') {
+    if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
     $lurl = long_url($url);
     } else {
     $lurl = $url;

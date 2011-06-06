@@ -21,27 +21,34 @@ define('OAUTH_CONSUMER_SECRET', 'hym4qJF1F6nyjISzRUCFBU4OQSIr5mrk7074vId3K8');
 define('BITLY_LOGIN', 'netputer');
 define('BITLY_API_KEY', 'R_bd1cb944bb3a85a75e94d18354464d46');
 
+// API key for Twitpic - sign up at http://dev.twitpic.com/
+define('TWITPIC_API_KEY', 'bba355928ab3bc55399ddf8af7dc96e3');
+
 // API key for Read It Later - sign up at http://readitlaterlist.com/api/signup/
 define('READ_IT_LATER_API_KEY', 'eWKA2m33d6768ksq40pdrq9NW5T1x1dk');
+
+//set 'ON' to display Show Long URL opinion in settings page
+define('LONG_URL', 'OFF');
 
 // Optional: Enable to view page processing and API time
 define('DEBUG_MODE', 'OFF');
 
 // Base URL, should point to your website, including a trailing slash
-// Can be set manually but the following code tries to work it out automatically.
 define('BASE_URL', 'http://t.orzdream.com/');
 
 // MySQL storage of OAuth login details for users
-define('ACCESS_USERS', 'OFF'); // set MYSQL for MySQL Mode or set FILE for File Mode
+define('ACCESS_USERS', 'OFF'); // set 'MYSQL' for MySQL Mode or set 'FILE' for File Mode
 
 // set the cache floder for File Mode
 //define('CACHE_FLODER', 'cache/user');
 
 // or set the mysql information for MySQL mode
-//define('MYSQL_URL', 'localhost');
-//define('MYSQL_USER', 'username');
-//define('MYSQL_PASSWORD', 'password');
-//define('MYSQL_DB', 'dabr');
+/*
+define('MYSQL_URL', 'localhost');
+define('MYSQL_USER', 'username');
+define('MYSQL_PASSWORD', 'password');
+define('MYSQL_DB', 'dabr');
+*/
 
 /* The following table is needed to store user login details if you enable MySQL Mode:
 
