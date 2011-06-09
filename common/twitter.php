@@ -688,7 +688,7 @@ function twitter_get_media($status) {
 function twitter_parse_tags($input, $entities = false) {
 
         //Expanded t.co links to find thumbnails etc
-        if($entities) {
+        if((setting_fetch('hide_inline') !== 'yes') && $entities) {
                 foreach($entities->urls as $urls) {
                         if($urls->expanded_url != "") {
                                 $input = str_replace($urls->url, $urls->expanded_url, $input);
@@ -750,7 +750,7 @@ function twitter_parse_tags($input, $entities = false) {
     $out = nl2br($out);
 
         //Return t.co links back else breaking Twitter T&Cs
-        if($entities) {
+        if((setting_fetch('hide_inline') !== 'yes') && $entities) {
                 foreach($entities->urls as $urls) {
                         if($urls->expanded_url != "") {
                                 $out = preg_replace('#(?<=(\"|\'|\>))'.preg_quote($urls->expanded_url,'#').'(?=(\"|\'|\<))#i', $urls->url, $out);
