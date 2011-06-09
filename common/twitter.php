@@ -1597,8 +1597,8 @@ function theme_user_header($user) {
   $out .= '<strong>Private/Protected Tweets</strong><br />';
   }
   $out .= "Bio: {$bio}<br />";
-  $out .= (isset($user->url)) ? "Link: {$link}<br />" : "Link: No link to display.<br />";
-  $out .= (isset($user->location)) ? "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />" : "Location: No location to display.<br />";
+  $out .= (empty($user->url)) ? "Link: No link to display.<br />" : "Link: {$link}<br />";
+  $out .= (empty($user->location)) ? "Location: No location to display.<br />" : "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
   $out .= "Joined: {$date_joined} (~" . pluralise('tweet', $tweets_per_day, true) . " per day)";
   if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
     $out .= "<br /><strong>{$user->screen_name} ";
@@ -1928,7 +1928,7 @@ function theme_timeline($feed)
       $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
     } else {
       $text = twitter_parse_tags($status->text, $status->entities);
-      $media = twitter_get_media($status);
+      setting_fetch('hide_inline') || $media = twitter_get_media($status);
     }
     if (setting_fetch('buttontime', 'yes') == 'yes') {
       $link = theme('status_time_link', $status, !$status->is_direct);
