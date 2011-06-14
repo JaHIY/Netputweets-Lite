@@ -661,15 +661,16 @@ function twitter_fetch($url) {
 function link_trans($url) {
  switch (setting_fetch('linktrans', 'd')) {
     case 'o':
-   $atext = $url;
-   break;
+     $atext = $url;
+     break;
     case 'd':
-   $urlpara = parse_url($url);
-   $atext = "[{$urlpara[host]}]";
-   break;
+     $url = ((stripos($url,'http://') !== 0) && (stripos($url,'https://') !== 0)) ? 'http://'.$url : $url;
+     $urlpara = parse_url($url);
+     $atext = "[{$urlpara[host]}]";
+     break;
     case 'l':
-   $atext = "[link]";
-   break;
+     $atext = "[link]";
+     break;
     }
  return $atext;
 }
@@ -736,7 +737,7 @@ function twitter_parse_tags($input, $entities = false) {
                 foreach($urls as $url) 
                 {
                      
-                     if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
+                     if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
                         $lurl = long_url($url);
                      } else {
                         $lurl = $url;
@@ -752,7 +753,7 @@ function twitter_parse_tags($input, $entities = false) {
                                                 ->addLinksToURLs();
                         foreach($urls as $url) 
                         {
-                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
+                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
                                 $lurl = long_url($url);
                                 $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
                             } else {
