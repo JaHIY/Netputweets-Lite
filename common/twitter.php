@@ -687,24 +687,52 @@ function twitter_get_media($status) {
 
 function twitter_parse_tags($input, $entities = false) {
 
-        //Expanded t.co links to find thumbnails etc
-        if((setting_fetch('hide_inline') !== 'yes') && $entities) {
+        // Use the Entities to replace hyperlink URLs
+        // http://dev.twitter.com/pages/tweet_entities
+        if($entities) {
+                $out = $input;
                 foreach($entities->urls as $urls) {
-                        if($urls->expanded_url != "") {
-                                $input = str_replace($urls->url, $urls->expanded_url, $input);
+                        if($urls->display_url != "") {
+                                $display_url = $urls->display_url;
+                        } else {
+                                $display_url = $urls->url;
                         }
+
+                        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+                        {
+                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
+                                $lurl = long_url($urls->url);
+                            } else {
+                                $lurl = $urls->url;
+                            }
+                            $encoded = urlencode($lurl);
+                            $link = "http://google.com/gwt/n?u={$encoded}";
+                        } else {
+                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
+                                $lurl = long_url($urls->url);
+                            } else {
+                                $lurl = $urls->url;
+                            }
+                            $link = $lurl;
+                        }
+                        $atext = link_trans($display_url);
+                        $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
+                        $url = $urls->url;
+                        
+                        // Replace all URLs *UNLESS* they have already been linked (for example to an image)
+                        $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
+                        $out = preg_replace($pattern,  $link_html, $out);
                 }
-        }
+        } else {  // If Entities haven't been returned, use Autolink
+                // Create an array containing all URLs
+                $urls = Twitter_Extractor::create($input)
+                                ->extractURLs();
 
-    // Create an array containing all URLs
-    $urls = Twitter_Extractor::create($input)
-                            ->extractURLs();
-
-    $out = $input;
+                $out = $input;
 
         // Hyperlink the URLs 
-        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
-        {
+            if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+            {
                 foreach($urls as $url) 
                 {
                      
@@ -717,7 +745,7 @@ function twitter_parse_tags($input, $entities = false) {
                      $atext = link_trans($lurl);
                      $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
                 }
-        } else {
+            } else {
                         $out = Twitter_Autolink::create($out)
                                                 ->setTarget('')
                                                 ->setTag('')
@@ -733,6 +761,7 @@ function twitter_parse_tags($input, $entities = false) {
                             $atext = link_trans($lurl);
                             $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
                         }
+            }
         }
 
         // Hyperlink the @ and lists
@@ -741,25 +770,16 @@ function twitter_parse_tags($input, $entities = false) {
                                 ->setTag('')
                                 ->addLinksToUsernamesAndLists();
 
-        // Hyperlink the #      
+        // Hyperlink the #
         $out = Twitter_Autolink::create($out)
                                 ->setTarget('')
                                 ->addLinksToHashtags();
 
-    //Linebreaks.  Some clients insert \n for formatting.
-    $out = nl2br($out);
+        //Linebreaks.  Some clients insert \n for formatting.
+        $out = nl2br($out);
 
-        //Return t.co links back else breaking Twitter T&Cs
-        if((setting_fetch('hide_inline') !== 'yes') && $entities) {
-                foreach($entities->urls as $urls) {
-                        if($urls->expanded_url != "") {
-                                $out = preg_replace('#(?<=(\"|\'|\>))'.preg_quote($urls->expanded_url,'#').'(?=(\"|\'|\<))#i', $urls->url, $out);
-                        }
-                }
-        }
-
-    //Return the completed string
-    return $out;
+        //Return the completed string
+        return $out;
 }
 
 function flickr_decode($num) {
@@ -2004,11 +2024,35 @@ $row = array('data' => $row, 'class' => $class);
 }
 
 function twitter_is_reply($status) {
-  if (!user_is_authenticated()) {
-    return false;
-  }
-  $user = user_current_username();
-  return preg_match("#@$user#i", $status->text);
+        if (!user_is_authenticated()) {
+                return false;
+        }
+        $user = user_current_username();
+
+        // Use Twitter Entities to see if this contains a mention of the user
+        if ($status->entities)  // If there are entities
+        {
+                $entities = $status->entities;
+                foreach($entities->user_mentions as $mentions)
+                {
+                        if ($mentions->screen_name == $user) 
+                        {
+                                return true;
+                        }
+                }
+                return false;
+        }
+        
+        // If there are no entities (for example on a search) do a simple regex
+        $found = Twitter_Extractor::create($status->text)->extractMentionedUsernames();
+        foreach($found as $mentions)
+        {
+                if ($mentions == $user) 
+                {
+                        return true;
+                }
+        }
+        return false;
 }
 
 function theme_followers($feed, $hide_pagination = false) {
