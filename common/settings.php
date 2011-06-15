@@ -283,8 +283,8 @@ $longtext = array(
         }
 
   $content .= '<form action="settings/save" method="post">';
-  $content .= '<p>Colour scheme:<br /><select name="colours">'.theme('options', $colour_schemes, setting_fetch('colours', 1)).'</select></p><hr />';
-  $content .= '<p>Mode:<br /><select name="browser">'.theme('options', $modes, $GLOBALS['current_theme']).'</select></p><hr />';
+  $content .= '<p><label>Colour scheme:<br /><select name="colours">'.theme('options', $colour_schemes, setting_fetch('colours', 1)).'</select></label></p><hr />';
+  $content .= '<p><label>Mode:<br /><select name="browser">'.theme('options', $modes, $GLOBALS['current_theme']).'</select></label></p><hr />';
   $content .= '<p>Configure Menu Items<br />';
   $content .= '<span class="texts">Choose what you want to display on the Top Bar.</span><br />';
   $content .= '<label><input type="checkbox" name="topuser" value="yes" '. (setting_fetch('topuser') == 'yes' ? ' checked="checked" ' : '') .' /> User</label><br />';
