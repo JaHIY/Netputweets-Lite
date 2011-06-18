@@ -31,10 +31,10 @@ function lists_paginated_process($url) {
 function twitter_lists_tweets($user, $list) {
     // Tweets belonging to a list
     $count = setting_fetch('ltpp', 20);
-    $url = API_URL."{$user}/lists/{$list}/statuses.json";
+    $url = API_URL."{$user}/lists/{$list}/statuses.json?include_entities=true";
     $page = intval($_GET['page']);
-    if ($page > 0) $url .= '?page='.$page;
-    $url .= '?per_page='. $count;
+    if ($page > 0) $url .= '&page='.$page;
+    $url .= '&per_page='. $count;
     return twitter_process($url);
 }
 
