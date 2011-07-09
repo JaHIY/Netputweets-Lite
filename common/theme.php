@@ -164,7 +164,7 @@ function externallinks() {
      anchor.onclick = function(){window.open(this.href);return false;};
  }
 }
-window.onload = externallinks;
+window.onload = externallinks();
 //-->
 </script>';
 }

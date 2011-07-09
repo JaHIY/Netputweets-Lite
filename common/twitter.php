@@ -1816,7 +1816,7 @@ function twitter_standard_timeline($feed, $source) {
       if($status->retweeted_status->id_str) {
         $feed[$key]->retweeted_status->id = $status->retweeted_status->id_str;
       }
-      // 2011/02/09 Kars add these codes.
+      // 2011/02/09 Kars adds these codes.
       if($status->retweeted_status->in_reply_to_status_id_str) {
         $feed[$key]->retweeted_status->in_reply_to_status_id = $status->retweeted_status->in_reply_to_status_id_str;
       }
