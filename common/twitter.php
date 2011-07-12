@@ -705,27 +705,21 @@ function twitter_parse_tags($input, $entities = false) {
                                 $display_url = $urls->url;
                         }
 
+                        $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
+
+                        $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
+
                         if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
                         {
-                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
-                                $lurl = long_url($urls->url);
-                            } else {
-                                $lurl = $urls->url;
-                            }
                             $encoded = urlencode($lurl);
                             $link = "http://google.com/gwt/n?u={$encoded}";
                         } else {
-                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON'){
-                                $lurl = long_url($urls->url);
-                            } else {
-                                $lurl = $urls->url;
-                            }
                             $link = $lurl;
                         }
                         $atext = link_trans($display_url);
                         $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
                         $url = $urls->url;
-                        
+
                         // Replace all URLs *UNLESS* they have already been linked (for example to an image)
                         $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
                         $out = preg_replace($pattern,  $link_html, $out);
