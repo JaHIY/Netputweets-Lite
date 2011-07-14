@@ -466,21 +466,49 @@ return theme('page', 'Error', '<p>You can\'t use Picture uploads while accessing
     }
 }
 
+function line_united($str) {
+    $str = str_replace(array("\r\n", "\r"), "\n", $str);
+    return $str;
+}
+
 function twitter_profile_page($query) {
     $url = API_URL."account/update_profile.json";
     if ($_POST['name']) {
     $post_data = array(
-      'name' => stripslashes($_POST['name']),
-      'location' => $_POST['location'],
-      'url' => $_POST['url'],
-      'description' => $_POST['description'],
+      'name' => line_united(stripslashes($_POST['name'])),
+      'location' => line_united($_POST['location']),
+      'url' => line_united($_POST['url']),
+      'description' => line_united($_POST['description']),
     );
     $p = twitter_process($url, $post_data);
     $user = user_current_username();
     twitter_refresh("user/{$user}");
     } else {
     $p = twitter_process($url, $post_data);
-    $content = "<form method=\"post\" action=\"profile\" enctype=\"multipart/form-data\"><div>Name <input type=\"text\" name=\"name\" value=\"{$p->name}\" /> (Max 20) <br />Location <input type=\"text\" name=\"location\" value=\"{$p->location}\" /> (Max 30) <br />Link <input type=\"text\" name=\"url\" value=\"{$p->url}\" /> (Max 100) <br />Bio (Max 160) <br /><textarea name=\"description\" rows=\"3\" cols=\"60\" id=\"description\" >{$p->description}</textarea><br /><button type=\"submit\">Update</button></div></form>";
+    $content = "<form method=\"post\" action=\"profile\" enctype=\"multipart/form-data\"><div>Name: <input type=\"text\" name=\"name\" id=\"name\" value=\"{$p->name}\" /> <span id=\"name-remaining\">20</span><br />Location: <input type=\"text\" name=\"location\" id=\"location\" value=\"{$p->location}\" /><span id=\"location-remaining\">30</span><br />Link: <input type=\"text\" name=\"url\" id=\"url\" value=\"{$p->url}\" /> <span id=\"url-remaining\">100</span><br />Bio: <br /><textarea name=\"description\" id=\"description\" rows=\"3\" cols=\"60\">{$p->description}</textarea><br /><button type=\"submit\">Update</button> <span id=\"description-remaining\">160</span></div></form>";
+    $content .='<script type="text/javascript">
+<!--
+function updateCount(id,number) {
+var e = id + "-remaining";
+var remaining = number - document.getElementById(id).value.length;
+document.getElementById(e).innerHTML = remaining;
+if(remaining < 0) {
+ var colour = "#FF0000";
+ var weight = "bold";
+} else {
+ var colour = "";
+ var weight = "";
+}
+document.getElementById(e).style.color = colour;
+document.getElementById(e).style.fontWeight = weight;
+document.getElementById(id).onkeyup = function(){updateCount(id,number);}
+}
+updateCount("name",20);
+updateCount("location",30);
+updateCount("url",100);
+updateCount("description",160);
+//-->
+</script>';
     }
     $p = twitter_process($url, $post_data);
     return theme('page', 'Update Profile', $content);
@@ -1127,7 +1155,7 @@ function twitter_update() {
   $status = twitter_url_shorten(stripslashes(trim($_POST['status'])));
   $statusArr = array();
   if ($status) {
-    $status = str_replace(array("\r\n", "\r"), "\n", $status);
+    $status = line_united($status);
     $length = function_exists('mb_strlen') ? mb_strlen($status, 'utf-8') : strlen(utf8_decode($status));
     if ($length > 140) {
         switch (setting_fetch('longtext', 'r')) {
