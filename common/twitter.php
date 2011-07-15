@@ -501,12 +501,17 @@ if(remaining < 0) {
 }
 document.getElementById(e).style.color = colour;
 document.getElementById(e).style.fontWeight = weight;
+}
+function bindupdateCount(id,number) {
+updateCount(id,number);
+document.getElementById(id).onkeydown = function(){updateCount(id,number);}
+document.getElementById(id).onkeypress = function(){updateCount(id,number);}
 document.getElementById(id).onkeyup = function(){updateCount(id,number);}
 }
-updateCount("name",20);
-updateCount("location",30);
-updateCount("url",100);
-updateCount("description",160);
+bindupdateCount("name",20);
+bindupdateCount("location",30);
+bindupdateCount("url",100);
+bindupdateCount("description",160);
 //-->
 </script>';
     }
