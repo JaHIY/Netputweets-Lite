@@ -2227,7 +2227,7 @@ function theme_retweeters($feed, $hide_pagination = false) {
 
                 $name = theme('full_name', $user);
                 $tweets_per_day = twitter_tweets_per_day($user);
-                $last_tweet = strtotime($user->status->created_at);
+                /* $last_tweet = strtotime($user->status->created_at); */
                 $content = "{$name}<br /><span class='about'>";
                 if($user->description != "")
                         $content .= "Bio: " . twitter_parse_tags($user->description) . "<br />";
@@ -2238,13 +2238,6 @@ function theme_retweeters($feed, $hide_pagination = false) {
                 $content .= pluralise('friend', $user->friends_count, true) . ", ";
                 $content .= pluralise('follower', $user->followers_count, true) . ", ";
                 $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
-                $content .= "Last tweet: ";
-                if($user->protected == 'true' && $last_tweet == 0)
-                        $content .= "Private";
-                else if($last_tweet == 0)
-                        $content .= "Never tweeted";
-                else
-                        $content .= twitter_date('l jS F Y', $last_tweet);
                 $content .= "</span>";
 
   if (setting_fetch('avataro', 'yes') !== 'yes') {
