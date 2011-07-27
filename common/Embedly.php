@@ -1,7 +1,5 @@
 <?php
 
-// require 'EmbedlyApi.php';
-
 function embedly_embed_thumbnails(&$feed) {
     if (setting_fetch('hide_inline')) {
         return $text;
@@ -39,7 +37,7 @@ function embedly_embed_thumbnails(&$feed) {
         $justUrls = array_chunk ($justUrls, 20);
         $justUrls = $justUrls[0];
     }
-    $url = 'http://api.embed.ly/1/oembed?urls=' . implode(',', $justUrls) . '&format=json';
+    $url = 'http://api.embed.ly/1/oembed?key='.EMBEDLY_KEY.'&urls=' . implode(',', $justUrls) . '&format=json';
     $embedly_json = twitter_fetch($url);
     $oembeds = json_decode($embedly_json);
     

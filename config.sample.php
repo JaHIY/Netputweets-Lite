@@ -17,6 +17,11 @@ define('ENCRYPTION_KEY', 'Example Key - Change Me!');
 define('OAUTH_CONSUMER_KEY', 'awGBKfiSSqf1B2iKGsmJQ');
 define('OAUTH_CONSUMER_SECRET', 'hym4qJF1F6nyjISzRUCFBU4OQSIr5mrk7074vId3K8');
 
+// Embedly Key 
+// Embed image previews in tweets
+// Sign up at https://app.embed.ly/
+define('EMBEDLY_KEY', '');
+
 // bit.ly login and API key for URL shortening
 define('BITLY_LOGIN', 'netputer');
 define('BITLY_API_KEY', 'R_bd1cb944bb3a85a75e94d18354464d46');

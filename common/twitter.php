@@ -1987,7 +1987,9 @@ function theme_timeline($feed)
     $first=0;
 
   //Add in images
-  embedly_embed_thumbnails($feed);
+  if (EMBEDLY_KEY !== '') {
+    embedly_embed_thumbnails($feed);
+  }
 
     foreach ($feed as $status)
     {
