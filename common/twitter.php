@@ -639,12 +639,11 @@ function twitter_url_shorten_callback($match) {
             break;
         case 'j.mp':
             if (BITLY_API_KEY == '' || BITLY_LOGIN == '') return $match[0];
-            $request = 'http://api.bit.ly/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
+            $request = 'https://api-ssl.bitly.com/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
             $json = json_decode(twitter_fetch($request));
             switch ($json->status_code) {
                 case 200:
-                    $result = $json->data;
-                    return $result->url;
+                    return $json->data->url;
                     break;
                 default:
                     return $match[0];
