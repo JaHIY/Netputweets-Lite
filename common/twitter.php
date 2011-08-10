@@ -723,6 +723,36 @@ function twitter_get_media($status) {
     }
 }
 
+//Ugly patch by JahIY 2011.08.10
+function twitter_entities_links($entities_urls,$out) {
+    foreach($entities_urls as $urls) {
+        if($urls->display_url != "") {
+            $display_url = $urls->display_url;
+        } else {
+            $display_url = $urls->url;
+        }
+
+        $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
+
+        $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
+
+        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+        {
+            $encoded = urlencode($lurl);
+            $link = "http://google.com/gwt/n?u={$encoded}";
+        } else {
+            $link = $lurl;
+        }
+        $atext = link_trans($display_url);
+        $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
+        $url = $urls->url;
+
+        // Replace all URLs *UNLESS* they have already been linked (for example to an image)
+        $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
+        $out = preg_replace($pattern,$link_html, $out);
+    }
+    return $out;
+}
 
 function twitter_parse_tags($input, $entities = false) {
 
@@ -730,32 +760,8 @@ function twitter_parse_tags($input, $entities = false) {
         // http://dev.twitter.com/pages/tweet_entities
         if($entities) {
                 $out = $input;
-                foreach($entities->urls as $urls) {
-                        if($urls->display_url != "") {
-                                $display_url = $urls->display_url;
-                        } else {
-                                $display_url = $urls->url;
-                        }
-
-                        $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
-
-                        $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
-
-                        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
-                        {
-                            $encoded = urlencode($lurl);
-                            $link = "http://google.com/gwt/n?u={$encoded}";
-                        } else {
-                            $link = $lurl;
-                        }
-                        $atext = link_trans($display_url);
-                        $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
-                        $url = $urls->url;
-
-                        // Replace all URLs *UNLESS* they have already been linked (for example to an image)
-                        $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
-                        $out = preg_replace($pattern,  $link_html, $out);
-                }
+                $out = ($entities->urls) ? twitter_entities_links($entities->urls,$out) : $out;
+                $out = ($entities->media) ? twitter_entities_links($entities->media,$out) : $out;
         } else {  // If Entities haven't been returned, use Autolink
                 // Create an array containing all URLs
                 $urls = Twitter_Extractor::create($input)
@@ -1985,115 +1991,115 @@ function theme_timeline($feed)
     $date_heading = false;
     $first=0;
 
-  //Add in images
-  if (EMBEDLY_KEY !== '') {
-    embedly_embed_thumbnails($feed);
-  }
+    //Add in images
+    if (EMBEDLY_KEY !== '') {
+        embedly_embed_thumbnails($feed);
+    }
 
     foreach ($feed as $status)
     {
-      if ($first==0)
-      {
-    $since_id = $status->id;
-    $first++;
-      }
-      else
-      {
-    $max_id =  $status->id;
-    if ($status->original_id)
-    {
-      $max_id =  $status->original_id;
-    }
-      }
-    $time = strtotime($status->created_at);
-      if ($time > 0)
-      {
-    $date = twitter_date('l jS F Y', strtotime($status->created_at));
-    if ($date_heading !== $date)
-    {
-      $date_heading = $date;
-      $rows[] = array('data'  => array($date), 'class' => 'date');
-    }
-    }
-    else
-    {
-    $date = $status->created_at;
-      }
-      if ((setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($status->text)) {
-      $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
-    } else {
-      $text = twitter_parse_tags($status->text, $status->entities);
-      setting_fetch('hide_inline') || $media = twitter_get_media($status);
-    }
-    if (setting_fetch('buttontime', 'yes') == 'yes') {
-      $link = theme('status_time_link', $status, !$status->is_direct);
-    }
-      $actions = theme('action_icons', $status);
-      $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
-    if (setting_fetch('buttonfrom', 'yes') == 'yes') {
-        if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
-            $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
+        if ($first==0)
+        {
+            $since_id = $status->id;
+            $first++;
+        }
+        else
+        {
+            $max_id =  $status->id;
+            if ($status->original_id)
+            {
+                $max_id =  $status->original_id;
+            }
+        }
+        $time = strtotime($status->created_at);
+        if ($time > 0)
+        {
+            $date = twitter_date('l jS F Y', strtotime($status->created_at));
+            if ($date_heading !== $date)
+            {
+                $date_heading = $date;
+                $rows[] = array('data'  => array($date), 'class' => 'date');
+            }
+        }
+        else
+        {
+            $date = $status->created_at;
+        }
+        if ((setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($status->text)) {
+            $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
         } else {
-            $source = $status->source ? " via ".strip_tags($status->source) ."" : '';
+            $text = twitter_parse_tags($status->text, $status->entities);
+            setting_fetch('hide_inline') || $media = twitter_get_media($status);
         }
-    } else {
-        $source = NULL;
-    }
-      if ($status->place->name) {
-        $source .= " " . $status->place->name . ", " . $status->place->country;
+        if (setting_fetch('buttontime', 'yes') == 'yes') {
+            $link = theme('status_time_link', $status, !$status->is_direct);
         }
-      if ($status->in_reply_to_status_id)
-      {
-    $source .= " <a href='status/{$status->in_reply_to_status_id_str}'>in reply to {$status->in_reply_to_screen_name}</a>";
-      }
-    if ($status->retweet_count)     {
-      $source .= " <a href='retweeted_by/{$status->id}'>retweeted ";
-      switch($status->retweet_count) {
-            case(1) : $source .= "once</a>"; break;
-            case(2) : $source .= "twice</a>"; break;
-            default : $source .= $status->retweet_count . " times</a>";
-      }
+        $actions = theme('action_icons', $status);
+        $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+        if (setting_fetch('buttonfrom', 'yes') == 'yes') {
+            if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
+                $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
+            } else {
+                $source = $status->source ? " via ".strip_tags($status->source) ."" : '';
+            }
+        } else {
+            $source = NULL;
+        }
+        if ($status->place->name) {
+            $source .= " " . $status->place->name . ", " . $status->place->country;
+        }
+        if ($status->in_reply_to_status_id)
+        {
+            $source .= " <a href='status/{$status->in_reply_to_status_id_str}'>in reply to {$status->in_reply_to_screen_name}</a>";
+        }
+        if ($status->retweet_count)     {
+            $source .= " <a href='retweeted_by/{$status->id}'>retweeted ";
+            switch($status->retweet_count) {
+                case(1) : $source .= "once</a>"; break;
+                case(2) : $source .= "twice</a>"; break;
+                default : $source .= $status->retweet_count . " times</a>";
+            }
+        }
+        if ($status->retweeted_by) {
+            $retweeted_by = $status->retweeted_by->user->screen_name;
+            $source .= "<br /><a href='retweeted_by/{$status->id}'>retweeted</a> by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
+        }
+        $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text}<br />$media<span class='texts'>$source</span>";
+        unset($row);
+        $class = 'status';
+
+
+        if ($page != 'user' && $avatar)
+        {
+        $row[] = array('data' => $avatar, 'class' => 'avatar');
+        $class .= ' shift';
+        }
+
+        $row[] = array('data' => $html, 'class' => $class);
+
+        $class = 'tweet';
+        if ($page != 'replies' && twitter_is_reply($status))
+        {
+            $class .= ' reply';
+        }
+        $row = array('data' => $row, 'class' => $class);
+
+        $rows[] = $row;
     }
-    if ($status->retweeted_by) {
-    $retweeted_by = $status->retweeted_by->user->screen_name;
-     $source .= "<br /><a href='retweeted_by/{$status->id}'>retweeted</a> by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
-    }
-    $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text}<br />$media<span class='texts'>$source</span>";
-      unset($row);
-      $class = 'status';
-
-
-      if ($page != 'user' && $avatar)
-      {
-    $row[] = array('data' => $avatar, 'class' => 'avatar');
-    $class .= ' shift';
-      }
-
-$row[] = array('data' => $html, 'class' => $class);
-
-$class = 'tweet';
-      if ($page != 'replies' && twitter_is_reply($status))
-      {
-    $class .= ' reply';
-      }
-$row = array('data' => $row, 'class' => $class);
-
-      $rows[] = $row;
-  }
-  $content = theme('table', array(), $rows, array('class' => 'timeline'));
+    $content = theme('table', array(), $rows, array('class' => 'timeline'));
     //$content .= theme('pagination');
     if ($page != '')
     {
-      $content .= theme('pagination');
+        $content .= theme('pagination');
     }
     else
     {
       //Doesn't work. since_id returns the most recent tweets up to since_id, not since. Grrr
       //$links[] = "<a href='{$_GET['q']}?since_id=$since_id'>Newer</a>";
 
-      if(is_64bit()) $max_id = intval($max_id) - 1; //stops last tweet appearing as first tweet on next page
-      $links[] = "<a href='{$_GET['q']}?max_id=$max_id' accesskey='9'>Older</a> 9";
-      $content .= '<p>'.implode(' | ', $links).'</p>';
+        if(is_64bit()) $max_id = intval($max_id) - 1; //stops last tweet appearing as first tweet on next page
+        $links[] = "<a href='{$_GET['q']}?max_id=$max_id' accesskey='9'>Older</a> 9";
+        $content .= '<p>'.implode(' | ', $links).'</p>';
     }
 
     return $content;
