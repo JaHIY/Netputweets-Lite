@@ -110,7 +110,7 @@ function embedly_embed_thumbnails(&$feed) {
     // Put the thumbnails into the $feed
     foreach ($justUrls as $index => $url) {
         if ($thumb = $oembeds[$index]->thumbnail_url) {
-            $html = theme('external_link', $url, "<img src='" . IMAGE_PROXY_URL . "x50/200/" . $thumb . "' />");
+            $html = theme('external_link', $url, "<img alt='' src='" . IMAGE_PROXY_URL . "x50/200/" . $thumb . "' />");
             foreach ($matched_urls[$url] as $statusId) {
                 $feed[$statusId]->text = $html . '<br />' . $feed[$statusId]->text;
             }
