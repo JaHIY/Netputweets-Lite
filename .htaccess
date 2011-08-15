@@ -1,4 +1,4 @@
-# ÈôÎŞ·¨½øĞĞÕı³£²Ù×÷ ²¿·ÖÖ÷»ú¿ÉÄÜĞèÒª½«ÏÂÃæÒ»ĞĞ×îÇ°ÃæµÄ×¢ÊÍ·ûºÅÉ¾³ı
+# è‹¥æ— æ³•è¿›è¡Œæ­£å¸¸æ“ä½œ éƒ¨åˆ†ä¸»æœºå¯èƒ½éœ€è¦å°†ä¸‹é¢ä¸€è¡Œæœ€å‰é¢çš„æ³¨é‡Šç¬¦å·åˆ é™¤
 # RewriteBase /
 
 IndexIgnore *
@@ -29,7 +29,7 @@ RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
 </IfModule>
 <Ifmodule mod_expires.c>
     ExpiresActive On
-    ExpiresDefault A3600
+    ExpiresDefault A0
     ExpiresByType text/css A604800
     ExpiresByType text/javascript A604800
     ExpiresByType text/html A3600

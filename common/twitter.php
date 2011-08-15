@@ -1991,6 +1991,13 @@ function theme_timeline($feed)
     $date_heading = false;
     $first=0;
 
+    // Add the hyperlinks *BEFORE* adding images
+    foreach ($feed as &$status)
+    {
+        $status->text = twitter_parse_tags($status->text, $status->entities);
+    }
+    unset($status);
+
     //Add in images
     if (EMBEDLY_KEY !== '') {
         embedly_embed_thumbnails($feed);
@@ -2028,7 +2035,7 @@ function theme_timeline($feed)
         if ((setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($status->text)) {
             $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
         } else {
-            $text = twitter_parse_tags($status->text, $status->entities);
+            $text = $status->text;
             setting_fetch('hide_inline') || $media = twitter_get_media($status);
         }
         if (setting_fetch('buttontime', 'yes') == 'yes') {
@@ -2380,50 +2387,38 @@ function theme_pagination()
 }
 
 function theme_action_icons($status) {
-  $from = $status->from->screen_name;
+    $from = $status->from->screen_name;
     $retweeted_by = $status->retweeted_by->user->screen_name;
     $retweeted_id = $status->retweeted_by->id;
-  $geo = $status->geo;
-  $actions = array();
-  
-  if (!$status->is_direct) {
-    if (setting_fetch('buttonrl', 'yes') == 'yes' && setting_fetch('rl_user','') !== '' && setting_fetch('rl_pass','') !== '') {
-    $actions[] = theme('action_icon', "status/{$status->id}/rl", 'images/instapaper.png', 'RL');
+    $geo = $status->geo;
+    $actions = array();
+
+    if (!$status->is_direct) {
+        if (setting_fetch('buttonrl', 'yes') == 'yes' && setting_fetch('rl_user','') !== '' && setting_fetch('rl_pass','') !== '') {
+            $actions[] = theme('action_icon', "status/{$status->id}/rl", 'images/instapaper.png', 'RL');
+        }
+        if (setting_fetch('buttonre', 'yes') == 'yes') {
+            $actions[] = theme('action_icon', "user/{$from}/reply/{$status->id}", 'images/reply.png', 'AT');
+        }
     }
-    if (setting_fetch('buttonre', 'yes') == 'yes') {
-    $actions[] = theme('action_icon', "user/{$from}/reply/{$status->id}", 'images/reply.png', 'AT');
-    }
-  }
-  //Reply All functionality. 
-    if(substr_count(($status->text), '@') >= 1)
+    //Reply All functionality. 
+    if(setting_fetch('buttonreall') == 'yes' && $status->entities->user_mentions)
     {
-      $found = Twitter_Extractor::create($status->text)->extractMentionedUsernames();
-      $to_users = array_unique($found);
-      
-      $key = array_search(user_current_username(), $to_users); // Remove the username of the authenticated user
-      if ($key != NULL || $key !== FALSE) // Depending on PHP version
-      {
-    unset($to_users[$key]); // remove the username from array
-      }
-      
-      if (count($to_users) >= 1)
-      {
-    $actions[] = theme('action_icon', "user/{$from}/replyall/{$status->id}", 'images/replyall.png', 'RE');
-      }
+        $actions[] = theme('action_icon', "user/{$from}/replyall/{$status->id}", 'images/replyall.png', 'RE');
     }
-  if (setting_fetch('buttondm') == 'yes') {
-    if (!user_is_current_user($from)) {
-    $actions[] = theme('action_icon', "directs/create/{$from}", 'images/dm.png', 'DM');
+    if (setting_fetch('buttondm') == 'yes') {
+        if (!user_is_current_user($from)) {
+            $actions[] = theme('action_icon', "directs/create/{$from}", 'images/dm.png', 'DM');
+        }
     }
-  }
-  if (!$status->is_direct) {
-   if (setting_fetch('buttonfav', 'yes') == 'yes') {
-    if ($status->favorited == '1') {
-      $actions[] = theme('action_icon', "unfavourite/{$status->id}", 'images/star.png', 'UNFAV');
-    } else {
-      $actions[] = theme('action_icon', "favourite/{$status->id}", 'images/star_grey.png', 'FAV');
-    }
-  }
+    if (!$status->is_direct) {
+        if (setting_fetch('buttonfav', 'yes') == 'yes') {
+            if ($status->favorited == '1') {
+                $actions[] = theme('action_icon', "unfavourite/{$status->id}", 'images/star.png', 'UNFAV');
+            } else {
+                $actions[] = theme('action_icon', "favourite/{$status->id}", 'images/star_grey.png', 'FAV');
+            }
+        }
     if (setting_fetch('buttonrt', 'yes') == 'yes') {
         if ($retweeted_by) // Show a diffrent retweet icon to indicate to the user this is an RT
         {
@@ -2433,48 +2428,48 @@ function theme_action_icons($status) {
         }
     }
     if (setting_fetch('buttondel', 'yes') == 'yes') {
-    if (user_is_current_user($from))
-    {
-      $actions[] = theme('action_icon', "confirm/delete/{$status->id}", 'images/trash.gif', 'DEL');
+        if (user_is_current_user($from))
+        {
+            $actions[] = theme('action_icon', "confirm/delete/{$status->id}", 'images/trash.gif', 'DEL');
+        }
+        if ($retweeted_by) //Allow users to delete what they have retweeted
+        {
+            if (user_is_current_user($retweeted_by))
+            {
+                $actions[] = theme('action_icon', "confirm/delete/{$retweeted_id}", 'images/trash.gif', 'DEL');
+            }
+        }
     }
-    if ($retweeted_by) //Allow users to delete what they have retweeted
-    {
-  if (user_is_current_user($retweeted_by))
-  {
-      $actions[] = theme('action_icon', "confirm/delete/{$retweeted_id}", 'images/trash.gif', 'DEL');
-  }
+    } else {
+        if (setting_fetch('buttondel', 'yes') == 'yes') {
+            $actions[] = theme('action_icon', "confirm/deleteDM/{$status->id}", 'images/trash.gif', 'DEL');
+        }
     }
-    }
-  } else {
-  if (setting_fetch('buttondel', 'yes') == 'yes') {
-    $actions[] = theme('action_icon', "confirm/deleteDM/{$status->id}", 'images/trash.gif', 'DEL');
-    }
-  }
-  
-  if (setting_fetch('buttonmap', 'yes') == 'yes') {
-    if ($geo !== null) 
-    {
-  $latlong = $geo->coordinates;
-  $lat = $latlong[0];
-  $long = $latlong[1];
-  $actions[] = theme('action_icon', "http://maps.google.com/m?q={$lat},{$long}", 'images/map.png', 'MAP');
-    }
-  }
-  // Added for translation
-  if (setting_fetch('buttontr', 'yes') == 'yes') {
-  $actions[] = theme('action_icon', "status/{$status->id}/tr", 'images/translate.gif', 'TR');
-}
 
-  if (setting_fetch('buttonot', 'yes') == 'yes') {
-$actions[] = theme('action_icon', "http://twitter.com/{$from}/status/{$status->id}", 'images/original.png', 'OT');
-}
+    if (setting_fetch('buttonmap', 'yes') == 'yes') {
+        if ($geo !== null) 
+        {
+            $latlong = $geo->coordinates;
+            $lat = $latlong[0];
+            $long = $latlong[1];
+            $actions[] = theme('action_icon', "http://maps.google.com/m?q={$lat},{$long}", 'images/map.png', 'MAP');
+        }
+    }
+    // Added for translation
+    if (setting_fetch('buttontr', 'yes') == 'yes') {
+        $actions[] = theme('action_icon', "status/{$status->id}/tr", 'images/translate.gif', 'TR');
+    }
 
-  if (setting_fetch('buttonsearch', 'yes') == 'yes') {
-//Search for @ to a user
-$actions[] = theme('action_icon',"search?query=%40{$from}",'images/q.png','?');
-}
+    if (setting_fetch('buttonot', 'yes') == 'yes') {
+        $actions[] = theme('action_icon', "http://twitter.com/{$from}/status/{$status->id}", 'images/original.png', 'OT');
+    }
 
-  return implode(' ', $actions);
+    if (setting_fetch('buttonsearch', 'yes') == 'yes') {
+        //Search for @ to a user
+        $actions[] = theme('action_icon',"search?query=%40{$from}",'images/q.png','?');
+    }
+
+    return implode(' ', $actions);
 }
 
 function theme_action_icon($url, $image_url, $text) {

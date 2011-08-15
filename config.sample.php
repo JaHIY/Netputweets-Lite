@@ -8,6 +8,10 @@ define('API_URL','https://api.twitter.com/1/');
 // Twitter's Search API URL.
 define('APIS_URL','https://search.twitter.com/');
 
+// You can set http://i.tinysrc.mobi/ or http://src.sencha.io/ here.
+define('IMAGE_PROXY_URL', 'http://i.tinysrc.mobi/');
+
+// Netputweets Lite's Title
 define('NETPUTWEETS_TITLE', 'Netputweets Lite!');
 
 // Cookie encryption key. Max 52 characters
