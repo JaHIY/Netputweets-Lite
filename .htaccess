@@ -29,7 +29,7 @@ RewriteRule ^(.*)$ index.php?q=$1 [L,QSA]
 </IfModule>
 <Ifmodule mod_expires.c>
     ExpiresActive On
-    ExpiresDefault A0
+    ExpiresDefault A5
     ExpiresByType text/css A604800
     ExpiresByType text/javascript A604800
     ExpiresByType text/html A3600
