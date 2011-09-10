@@ -28,13 +28,6 @@ define('OAUTH_CONSUMER_SECRET', '');
 // Sign up at https://app.embed.ly/
 define('EMBEDLY_KEY', '');
 
-// bit.ly login and API key for URL shortening
-define('BITLY_LOGIN', '');
-define('BITLY_API_KEY', '');
-
-// API key for Twitpic - sign up at http://dev.twitpic.com/
-define('TWITPIC_API_KEY', 'bba355928ab3bc55399ddf8af7dc96e3');
-
 // API key for Read It Later - sign up at http://readitlaterlist.com/api/signup/
 define('READ_IT_LATER_API_KEY', 'eWKA2m33d6768ksq40pdrq9NW5T1x1dk');
 

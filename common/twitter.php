@@ -349,6 +349,7 @@ updateCount();
 
 function twitter_media_page($query) {
     $content = "";
+    $status = stripslashes($_POST['message']);
 
     if ($_POST['message'] && $_FILES['image']['tmp_name']) 
     {
@@ -364,12 +365,11 @@ function twitter_media_page($query) {
         ));
 
         $image = "{$_FILES['image']['tmp_name']};type={$_FILES['image']['type']};filename={$_FILES['image']['name']}";
-        $status = $_POST['message'];
 
         $code = $tmhOAuth->request('POST', 'https://upload.twitter.com/1/statuses/update_with_media.json',
             array(
                 'media[]'  => "@{$image}",
-                'status'   => " " . $_POST['message'] //A space is needed because twitter b0rks if first char is an @
+                'status'   => " " . $status //A space is needed because twitter b0rks if first char is an @
             ),
             true, // use auth
             true  // multipart
@@ -418,7 +418,7 @@ function twitter_media_page($query) {
     $content .= "<form method='post' action='Upload Picture' enctype='multipart/form-data'>
     Image <input type='file' name='image' /><br />
     Message (optional):<br />
-    <textarea name='message' rows='3' cols='60' id='message'>" . $_POST['message'] . "</textarea><br>
+    <textarea name='message' rows='3' cols='60' id='message'>" . $status . "</textarea><br />
     <input type='submit' value='Send'><span id='remaining'>120</span>
     </form>";
     $content .= js_counter("message", "120");
@@ -577,62 +577,6 @@ function twitter_process($url, $post_data = false)
             } else {
                 theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p>");
             }
-    }
-}
-
-function twitter_url_shorten($text) {
-    return preg_replace_callback('#((\w+://|www)[\w\#$%&~/.\-;:=,?@\[\]+]{33,1950})(?<![.,])#is', 'twitter_url_shorten_callback', $text, -1);
-}
-
-function twitter_url_shorten_callback($match) {
-    if (preg_match('#http://www.flickr.com/photos/[^/]+/(\d+)/#', $match[0], $matches)) {
-        return 'http://flic.kr/p/'.flickr_encode($matches[1]);
-    }
-    switch (setting_fetch('short')) {
-        case 'no':
-            return $match[0];
-            break;
-        case 'j.mp':
-            if (BITLY_API_KEY == '' || BITLY_LOGIN == '') return $match[0];
-            $request = 'https://api-ssl.bitly.com/v3/shorten?login='.BITLY_LOGIN.'&apiKey='.BITLY_API_KEY.'&longUrl='.urlencode($match[0]).'&format=json';
-            $json = json_decode(twitter_fetch($request));
-            switch ($json->status_code) {
-                case 200:
-                    return $json->data->url;
-                    break;
-                default:
-                    return $match[0];
-                    break;
-            }
-            break;
-        case 'goo.gl':
-            $request = 'http://ggl-shortener.appspot.com/?url='.urlencode($match[0]);
-            $json = json_decode(twitter_fetch($request));//lzq
-            $result = (!isset($json->error_message)) ? $json->short_url : $match[0];
-            return $result;
-            break;
-        default:
-            $short_url_mapping = array(
-                '8.nf' => 'http://8.nf/api.php?format=simple&action=shorturl&url=',
-                'zi.mu' => 'http://zi.mu/api.php?format=simple&action=shorturl&url=',
-                'ye.pe' => 'http://ye.pe/api.php?format=simple&action=shorturl&url=',
-                'orz.se' => 'http://orz.se/api.php?format=simple&action=shorturl&url=',
-                'aa.cx' => 'http://aa.cx/api.php?url=',
-                'is.gd' => 'http://is.gd/api.php?longurl=',
-                's8.hk' => 'http://s8.hk/api/shorten?longUrl=',
-                'tinyurl.com' => 'http://tinyurl.com/api-create.php?url='
-            );
-            foreach ($short_url_mapping as $setting => $url) {
-                if (setting_fetch('short') == $setting) {
-                    $request = $url.urlencode($match[0]);
-                    $links = twitter_fetch($request);
-                    $result = (stripos($links, 'http://'.$setting) == 0) ?  $links : $match[0];
-                    return $result;
-                } else {
-                    return $match[0];
-                }
-            }
-        break;
     }
 }
 
@@ -904,18 +848,18 @@ function twitter_status_page($query) {
 
         if(strcmp($query[2],'')==0){
             $thread_id = $status->id_str;
-            $request = API_URL."related_results/show/{$thread_id}.json";
+            $request = API_URL."related_results/show/{$thread_id}.json?include_entities=true";
             $threadstatus = twitter_process($request);
             if ($threadstatus && $threadstatus[0] && $threadstatus[0]->results) {
                 $array = array_reverse($threadstatus[0]->results);
                 $tl = array();
                 foreach ($array as $key=>$value) {
-                    array_push($tl, $value->value);
+                    $tl[] = $value->value;
                     if ($value->value->in_reply_to_status_id_str && $value->value->in_reply_to_status_id_str == $status->id_str) {
-                        array_push($tl, $status);
+                        $tl[] = $status;
                     }
                 }
-                $tl = twitter_standard_timeline($tl, 'replies');
+                $tl = twitter_standard_timeline($tl, 'status');
                 $content .= '<p>Related results...</p>'.theme('timeline', $tl);
             } elseif (!$status->user->protected) {
             $thread = twitter_thread_timeline($id);
@@ -1143,7 +1087,7 @@ function twitter_retweeters_page($tweet) {
 
 function twitter_update() {
     twitter_ensure_post_action();
-    $status = twitter_url_shorten(stripslashes(trim($_POST['status'])));
+    $status = stripslashes(trim($_POST['status']));
     $statusArr = array();
     if ($status) {
         $status = line_united($status);
