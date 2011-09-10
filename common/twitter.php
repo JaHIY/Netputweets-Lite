@@ -349,7 +349,7 @@ updateCount();
 
 function twitter_media_page($query) {
     $content = "";
-    $status = stripslashes($_POST['message']);
+    $status = line_united(stripslashes($_POST['message']));
 
     if ($_POST['message'] && $_FILES['image']['tmp_name']) 
     {
@@ -388,7 +388,7 @@ function twitter_media_page($query) {
             $text = $json->text;
 
             $content = "<p>Upload success. Image posted to Twitter.</p>
-    <p><img src=\"" . IMAGE_PROXY_URL . $image_url . "\" alt='' /></p>
+    <p><img src=\"" . IMAGE_PROXY_URL . "x50/200/" . $image_url . "\" alt='' /></p>
     <p>". twitter_parse_tags($text) . "</p>";
 
         } else {
@@ -415,11 +415,11 @@ function twitter_media_page($query) {
         }
     }
 
-    $content .= "<form method='post' action='Upload Picture' enctype='multipart/form-data'>
+    $content .= "<form method='post' action='picture' enctype='multipart/form-data'>
     Image <input type='file' name='image' /><br />
     Message (optional):<br />
     <textarea name='message' rows='3' cols='60' id='message'>" . $status . "</textarea><br />
-    <input type='submit' value='Send'><span id='remaining'>120</span>
+    <button type='submit'>Send</button><span id='remaining'>120</span>
     </form>";
     $content .= js_counter("message", "120");
 
@@ -802,23 +802,37 @@ function twitter_status_page($query) {
         $status = twitter_process($request);
         $content = theme('status', $status);
 
-        // check for translate flag
-        if (strcmp($query[2],'tr')==0) {
-            $r = twitter_process("http://ajax.googleapis.com/ajax/services/language/translate?v=1.0&langpair=|en&q=".urlencode($status->text));  
-            $rz = twitter_process("http://ajax.googleapis.com/ajax/services/language/translate?v=1.0&langpair=|zh-CN&q=".urlencode($status->text));  
-            $content .= "<p class=\"translate\"><strong>English Translation</strong>: ".
-            $r->responseData->translatedText."</p>";
-            $content .= "<p class=\"translate\"><strong>Simplified Chinese Translation</strong>: ".
-            $rz->responseData->translatedText."</p>";
+        if(strcmp($query[2],'')==0){
+            $status = twitter_process($request);
+            $threadrequest = API_URL."related_results/show/{$id}.json?include_entities=true";
+            $threadstatus = twitter_process($threadrequest);
+            if ($threadstatus && $threadstatus[0] && $threadstatus[0]->results) {
+                $array = array_reverse($threadstatus[0]->results);
+                $tl = array();
+                foreach ($array as $key=>$value) {
+                    $tl[] = $value->value;
+                    if ($value->value->in_reply_to_status_id_str && $value->value->in_reply_to_status_id_str == $id) {
+                        $tl[] = $status;
+                    }
+                }
+                $tl = twitter_standard_timeline($tl, 'status');
+                $content .= '<p>Related results...</p>'.theme('timeline', $tl);
+            } elseif (!$status->user->protected) {
+                $thread = twitter_thread_timeline($id);
+                if ($thread) {
+                    $content .= '<p>And the experimental conversation view...</p>'.theme('timeline', $thread);
+                    $content .= "<p>Don't like the thread order? Go to <a href='settings'>settings</a> to reverse it. Either way - the dates/times are not always accurate.</p>";
+                }
+            }
         }
 
         // Add Read It Later
-        if(strcmp($query[2],'rl')==0){
+        elseif(strcmp($query[2],'rl')==0){
             $rl_api = "http://readitlaterlist.com/v2/add?username=".setting_fetch('rl_user','')."&password=".setting_fetch('rl_pass','')."&apikey=".READ_IT_LATER_API_KEY;
             $rl_u = "http://twitter.com/".$status->user->screen_name."/status/".$status->id_str;
             $rl_t = "Tweet+from+@".$status->user->screen_name.":+".urlencode($status->text);
 
-            $curl_url = "$rl_api&url=$rl_u&title=$rl_t";
+            $curl_url = "{$rl_api}&url={$rl_u}&title={$rl_t}";
 
             $ret = twitter_fetch($curl_url);
             switch ($ret) {
@@ -843,28 +857,6 @@ function twitter_status_page($query) {
                 default:
                     $content .= "ERROR: instead of response code 200, we got: $ret.";
                     break;
-            }
-        }
-
-        if(strcmp($query[2],'')==0){
-            $thread_id = $status->id_str;
-            $request = API_URL."related_results/show/{$thread_id}.json?include_entities=true";
-            $threadstatus = twitter_process($request);
-            if ($threadstatus && $threadstatus[0] && $threadstatus[0]->results) {
-                $array = array_reverse($threadstatus[0]->results);
-                $tl = array();
-                foreach ($array as $key=>$value) {
-                    $tl[] = $value->value;
-                    if ($value->value->in_reply_to_status_id_str && $value->value->in_reply_to_status_id_str == $status->id_str) {
-                        $tl[] = $status;
-                    }
-                }
-                $tl = twitter_standard_timeline($tl, 'status');
-                $content .= '<p>Related results...</p>'.theme('timeline', $tl);
-            } elseif (!$status->user->protected) {
-            $thread = twitter_thread_timeline($id);
-            $content .= '<p>And the experimental conversation view...</p>'.theme('timeline', $thread);
-            $content .= "<p>Don't like the thread order? Go to <a href='settings'>settings</a> to reverse it. Either way - the dates/times are not always accurate.</p>";
             }
         }
 
@@ -1726,10 +1718,6 @@ function twitter_standard_timeline($feed, $source) {
             }
             if($status->retweeted_status->id_str) {
                 $feed[$key]->retweeted_status->id = $status->retweeted_status->id_str;
-            }
-            // 2011/02/09 Kars adds these codes.
-            if($status->retweeted_status->in_reply_to_status_id_str) {
-                $feed[$key]->retweeted_status->in_reply_to_status_id = $status->retweeted_status->in_reply_to_status_id_str;
             }
         }
     }

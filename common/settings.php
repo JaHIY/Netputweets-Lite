@@ -119,7 +119,6 @@ function settings_page($args) {
         $settings['buttondel'] = $_POST['buttondel'];
         $settings['buttonmap'] = $_POST['buttonmap'];
         $settings['buttongeo'] = $_POST['buttongeo'];
-        $settings['buttontr'] = $_POST['buttontr'];
         $settings['buttonot'] = $_POST['buttonot'];
         $settings['buttonsearch'] = $_POST['buttonsearch'];
         $settings['buttontime'] = $_POST['buttontime'];
@@ -284,7 +283,6 @@ function settings_page($args) {
     $content .= '<label><input type="checkbox" name="buttonrt" value="yes" '. (setting_fetch('buttonrt', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> RT [Retweet]</label>';
     $content .= '<label><input type="checkbox" name="buttondel" value="yes" '. (setting_fetch('buttondel', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> DEL [Delete]</label><br />';
     $content .= '<label><input type="checkbox" name="buttonmap" value="yes" '. (setting_fetch('buttonmap', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> MAP [Google Map]</label>';
-    $content .= '<label><input type="checkbox" name="buttontr" value="yes" '. (setting_fetch('buttontr', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> TR [Translate]</label>';
     $content .= '<label><input type="checkbox" name="buttonot" value="yes" '. (setting_fetch('buttonot', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> OT [Original Tweet]</label>';
     $content .= '<label><input type="checkbox" name="buttonsearch" value="yes" '. (setting_fetch('buttonsearch', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> ? [Search for @ to a user]</label>';
     $content .= '<label><input type="checkbox" name="buttongeo" value="yes" '. (setting_fetch('buttongeo') == 'yes' ? ' checked="checked" ' : '') .' /> GEO [Geolocation]</label><br />';
