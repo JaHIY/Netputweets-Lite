@@ -388,7 +388,7 @@ function twitter_media_page($query) {
             $text = $json->text;
 
             $content = "<p>Upload success. Image posted to Twitter.</p>
-    <p><img src=\"" . IMAGE_PROXY_URL . "x50/200/" . $image_url . "\" alt='' /></p>
+    <p><img src=\"" . IMAGE_PROXY_URL . "x50/" . $image_url . "\" alt='' /></p>
     <p>". twitter_parse_tags($text) . "</p>";
 
         } else {
@@ -631,119 +631,120 @@ function twitter_get_media($status) {
 
 }
 
-//Ugly patch by JahIY 2011.08.10
-function twitter_entities_links($entities_urls,$out) {
-    foreach($entities_urls as $urls) {
-        if($urls->display_url != "") {
-            $display_url = $urls->display_url;
-        } else {
-            $display_url = $urls->url;
-        }
-
-        $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
-
-        $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
-
-        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
-        {
-            $encoded = urlencode($lurl);
-            $link = "http://google.com/gwt/n?u={$encoded}";
-        } else {
-            $link = $lurl;
-        }
-        $atext = link_trans($display_url);
-        $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
-        $url = $urls->url;
-
-        // Replace all URLs *UNLESS* they have already been linked (for example to an image)
-        $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
-        $out = preg_replace($pattern,$link_html, $out);
-    }
-    return $out;
-}
-
 function twitter_parse_tags($input, $entities = false) {
+    $out = $input;
 
-        // Use the Entities to replace hyperlink URLs
-        // http://dev.twitter.com/pages/tweet_entities
-        if($entities) {
-                $out = $input;
-                $out = ($entities->urls) ? twitter_entities_links($entities->urls,$out) : $out;
-                $out = ($entities->media) ? twitter_entities_links($entities->media,$out) : $out;
-        } else {  // If Entities haven't been returned, use Autolink
-                // Create an array containing all URLs
-                $urls = Twitter_Extractor::create($input)
-                                ->extractURLs();
+    //Linebreaks.  Some clients insert \n for formatting.
+    $out = nl2br($out);
 
-                $out = $input;
+    // Use the Entities to replace hyperlink URLs
+    // http://dev.twitter.com/pages/tweet_entities
+    if($entities) {
 
-        // Hyperlink the URLs 
+        foreach($entities->urls as $urls) {
+            if($urls->display_url != "") {
+                $display_url = $urls->display_url;
+            } else {
+                $display_url = $urls->url;
+            }
+
+            $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
+
+            $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
+
             if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
             {
-                foreach($urls as $url) 
-                {
-                     
-                     if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
-                        $lurl = long_url($url);
-                     } else {
-                        $lurl = $url;
-                     }
-                     $encoded = urlencode($lurl);
-                     $atext = link_trans($lurl);
-                     $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
-                }
+                $encoded = urlencode($lurl);
+                $link = "http://google.com/gwt/n?u={$encoded}";
             } else {
-                        $out = Twitter_Autolink::create($out)
-                                                ->setTarget('')
-                                                ->setTag('')
-                                                ->addLinksToURLs();
-                        foreach($urls as $url) 
-                        {
-                            if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
-                                $lurl = long_url($url);
-                                $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
-                            } else {
-                                $lurl = $url;
-                            }
-                            $atext = link_trans($lurl);
-                            $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
-                        }
+                $link = $lurl;
+            }
+            $atext = link_trans($display_url);
+            $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
+            $url = $urls->url;
+
+            // Replace all URLs *UNLESS* they have already been linked (for example to an image)
+            $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
+            $out = preg_replace($pattern,  $link_html, $out);
+        }
+        foreach($entities->hashtags as $hashtag) {
+            $text = $hashtag->text;
+
+            $pattern = '/(^|\s)([#＃]+)('. $text .')/iu';
+
+            $link_html = ' <a href="hash/' . $text . '" rel="external nofollow tag noreferrer" class="hashtag">#' . $text . '</a> ';
+
+            $out = preg_replace($pattern,  $link_html, $out, 1);
+        }
+    } else {  // If Entities haven't been returned (usually because of search or a bio) use Autolink
+        // Create an array containing all URLs
+        $urls = Twitter_Extractor::create($input)
+                                    ->extractURLs();
+
+        // Hyperlink the URLs 
+        if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+        {
+            foreach($urls as $url) 
+            {
+
+                if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
+                    $lurl = long_url($url);
+                } else {
+                    $lurl = $url;
+                }
+                $encoded = urlencode($lurl);
+                $atext = link_trans($lurl);
+                $out = str_replace($url, "<a href='http://google.com/gwt/n?u={$encoded}' rel='external nofollow noreferrer'>{$atext}</a>", $out);
+            }
+        } else {
+            $out = Twitter_Autolink::create($out)
+                                    ->setTarget('')
+                                    ->setTag('')
+                                    ->addLinksToURLs();
+            foreach($urls as $url) 
+            {
+                if (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') {
+                    $lurl = long_url($url);
+                    $out = str_replace('href="'.$url.'"', 'href="'.$lurl.'"', $out);
+                } else {
+                    $lurl = $url;
+                }
+                $atext = link_trans($lurl);
+                $out = str_replace(">{$url}</a>", ">{$atext}</a>", $out);
             }
         }
-
-        // Hyperlink the @ and lists
-        $out = Twitter_Autolink::create($out)
-                                ->setTarget('')
-                                ->setTag('')
-                                ->addLinksToUsernamesAndLists();
 
         // Hyperlink the #
         $out = Twitter_Autolink::create($out)
                                 ->setTarget('')
                                 ->addLinksToHashtags();
+    }
 
-        //Linebreaks.  Some clients insert \n for formatting.
-        $out = nl2br($out);
+    // Hyperlink the @ and lists
+    $out = Twitter_Autolink::create($out)
+                            ->setTarget('')
+                            ->setTag('')
+                            ->addLinksToUsernamesAndLists();
 
-        // Emails
-        $tok = strtok($out, " \n\t\n\r\0");     // Tokenise the string by whitespace
+    // Emails
+    $tok = strtok($out, " \n\t\n\r\0");     // Tokenise the string by whitespace
 
-        while ($tok !== false) {        // Go through all the tokens
-                $at = stripos($tok, "@");       // Does the string contain an "@"?
+    while ($tok !== false) {        // Go through all the tokens
+        $at = stripos($tok, "@");       // Does the string contain an "@"?
 
-                if ($at && $at > 0) { // @ is in the string & isn't the first character
-                        $tok = trim($tok, "?.,!\"\'");  // Remove any trailing punctuation
-                        
-                        if (filter_var($tok, FILTER_VALIDATE_EMAIL)) {  // Use the internal PHP email validator
-                                $email = $tok;
-                                $out = str_replace($email, "<a href=\"mailto:{$email}\">{$email}</a>", $out);   // Create the mailto: link
-                        }
-                }
-                $tok = strtok(" \n\t\n\r\0");   // Move to the next token
+        if ($at && $at > 0) { // @ is in the string & isn't the first character
+            $tok = trim($tok, "?.,!\"\'");  // Remove any trailing punctuation
+
+            if (filter_var($tok, FILTER_VALIDATE_EMAIL)) {  // Use the internal PHP email validator
+                $email = $tok;
+                $out = str_replace($email, "<a href=\"mailto:{$email}\">{$email}</a>", $out);   // Create the mailto: link
+            }
         }
+        $tok = strtok(" \n\t\n\r\0");   // Move to the next token
+    }
 
-        //Return the completed string
-        return $out;
+    //Return the completed string
+    return $out;
 }
 
 function flickr_decode($num) {
@@ -2315,10 +2316,6 @@ function theme_action_icons($status) {
             $long = $latlong[1];
             $actions[] = theme('action_icon', "http://maps.google.com/m?q={$lat},{$long}", 'images/map.png', 'MAP');
         }
-    }
-    // Added for translation
-    if (setting_fetch('buttontr', 'yes') == 'yes') {
-        $actions[] = theme('action_icon', "status/{$status->id}/tr", 'images/translate.gif', 'TR');
     }
 
     if (setting_fetch('buttonot', 'yes') == 'yes') {
