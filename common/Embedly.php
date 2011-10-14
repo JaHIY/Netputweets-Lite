@@ -44,51 +44,55 @@ function embedly_embed_thumbnails(&$feed) {
         if ($status->entities)    // If there are entities
         {
             $entities = $status->entities;
-            
-            foreach($entities->urls as $urls) 
-            {    // Loop through the URL entities
-                if($urls->expanded_url != "") 
-                {    // Use the expanded URL, if it exists, to pass to Embedly
-                    if (preg_match($embedly_re, $urls->expanded_url) > 0) 
-                    { // If it matches an Embedly supported URL
-                        $matched_urls[$urls->expanded_url][] = $status->id;
-                    }
-                    else 
-                    { // Can we handle it without an Embedly call?
-                        foreach ($services as $pattern => $thumbnail_url) 
-                        {
-                            if (preg_match_all($pattern, $urls->expanded_url, $matches, PREG_PATTERN_ORDER) > 0)
+
+            if($entities->urls)
+            {
+                foreach($entities->urls as $urls) 
+                {    // Loop through the URL entities
+                    if($urls->expanded_url != "") 
+                    {    // Use the expanded URL, if it exists, to pass to Embedly
+                        if (preg_match($embedly_re, $urls->expanded_url) > 0) 
+                        { // If it matches an Embedly supported URL
+                            $matched_urls[$urls->expanded_url][] = $status->id;
+                        }
+                        else 
+                        { // Can we handle it without an Embedly call?
+                            foreach ($services as $pattern => $thumbnail_url) 
                             {
-                                foreach ($matches[1] as $key => $match) 
+                                if (preg_match_all($pattern, $urls->expanded_url, $matches, PREG_PATTERN_ORDER) > 0)
                                 {
-                                    $html = theme('external_link', $urls->expanded_url, "<img src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
+                                    foreach ($matches[1] as $key => $match) 
+                                    {
+                                        $html = theme('external_link', $urls->expanded_url, "<img src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
+
+                                        $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
                                     
-                                    $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
-                                    
+                                    }
                                 }
                             }
                         }
                     }
-                }else 
-                { // If there is no expanded URL, use the regular URL
-                    //$match = $urls->url;
-                    if (preg_match($embedly_re, $urls->url) > 0) 
+                }
+            }
+            else 
+            { // If there is no expanded URL, use the regular URL
+              //$match = $urls->url;
+                if (preg_match($embedly_re, $urls->url) > 0) 
+                {
+                    $matched_urls[$urls->url][] = $status->id;
+                }
+                else 
+                { // Can we handle it without an Embedly call?
+                    foreach ($services as $pattern => $thumbnail_url) 
                     {
-                        $matched_urls[$urls->url][] = $status->id;
-                    }
-                    else 
-                    { // Can we handle it without an Embedly call?
-                        foreach ($services as $pattern => $thumbnail_url) 
+                        if (preg_match_all($pattern, $urls->url, $matches, PREG_PATTERN_ORDER) > 0)
                         {
-                            if (preg_match_all($pattern, $urls->url, $matches, PREG_PATTERN_ORDER) > 0)
+                            foreach ($matches[1] as $key => $match) 
                             {
-                                foreach ($matches[1] as $key => $match) 
-                                {
-                                    $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
-                                    
-                                    $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
-                                    
-                                }
+                                $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
+
+                                $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
+
                             }
                         }
                     }

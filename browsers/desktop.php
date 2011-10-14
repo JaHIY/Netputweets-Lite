@@ -6,6 +6,10 @@ function desktop_theme_status_form($text = '', $in_reply_to_id = NULL) {
         $fixedtagspre = (!empty($fixedtagspre) && (setting_fetch('fixedtagspreo', 'no') == "yes") && ($text == '')) ? $fixedtagspre." " : NULL;
         $fixedtagspost = (!empty($fixedtagspost) && (setting_fetch('fixedtagsposto', 'no') == "yes") && ($text == '')) ? " ".$fixedtagspost : NULL;
         $text = $fixedtagspre.$text.$fixedtagspost;
+        // adding ?status=foo will automaticall add "foo" to the text area.
+        if ($_GET['status']) {
+            $text = $_GET['status'];
+        }
         $output = '<form method="post" action="update">
   <fieldset><legend>What\'s Happening?</legend>
   <div><textarea id="status" name="status" rows="3" cols="60">'.$text.'</textarea>

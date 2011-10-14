@@ -355,6 +355,13 @@ function twitter_media_page($query) {
     {
         require 'tmhOAuth.php';
 
+        // Geolocation parameters
+        list($lat, $long) = explode(',', $_POST['location']);
+        if (is_numeric($lat) && is_numeric($long)) {
+            $post_data['lat'] = $lat;
+            $post_data['long'] = $long;
+        }
+
         list($oauth_token, $oauth_token_secret) = explode('|', $GLOBALS['user']['password']);
 
         $tmhOAuth = new tmhOAuth(array(
@@ -369,7 +376,9 @@ function twitter_media_page($query) {
         $code = $tmhOAuth->request('POST', 'https://upload.twitter.com/1/statuses/update_with_media.json',
             array(
                 'media[]'  => "@{$image}",
-                'status'   => " " . $status //A space is needed because twitter b0rks if first char is an @
+                'status'   => " " . $status, //A space is needed because twitter b0rks if first char is an @
+                'lat'      => $lat,
+                'long'     => $long,
             ),
             true, // use auth
             true  // multipart
@@ -419,8 +428,36 @@ function twitter_media_page($query) {
     Image <input type='file' name='image' /><br />
     Message (optional):<br />
     <textarea name='message' rows='3' cols='60' id='message'>" . $status . "</textarea><br />
-    <button type='submit'>Send</button><span id='remaining'>120</span>
-    </form>";
+    <button type='submit'>Send</button><span id='remaining'>120</span>";
+    $content .= '<span id="geo" style="display: none; float: right;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
+  <script type="text/javascript">
+<!--
+started = false;
+chkbox = document.getElementById("geoloc");
+if (navigator.geolocation) {
+    geoStatus("Tweet my location");
+    if ("'.$_COOKIE['geo'].'"=="Y") {
+        chkbox.checked = true;
+        goGeo();
+    }
+}
+function goGeo(node) {
+    if (started) return;
+    started = true;
+    geoStatus("Locating...");
+    navigator.geolocation.getCurrentPosition(geoSuccess, geoStatus, {enableHighAccuracy: true});
+}
+function geoStatus(msg) {
+    document.getElementById("geo").style.display = "inline";
+    document.getElementById("lblGeo").innerHTML = msg;
+}
+function geoSuccess(position) {
+    geoStatus("Tweet my <a href=\'http://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
+    chkbox.value = position.coords.latitude + "," + position.coords.longitude;
+}
+//-->
+</script>
+</form>';
     $content .= js_counter("message", "120");
 
     return theme('page', 'Picture Upload', $content);
@@ -640,41 +677,45 @@ function twitter_parse_tags($input, $entities = false) {
     // Use the Entities to replace hyperlink URLs
     // http://dev.twitter.com/pages/tweet_entities
     if($entities) {
+        if($entities->urls) {
+            foreach($entities->urls as $urls) {
+                if($urls->display_url != "") {
+                    $display_url = $urls->display_url;
+                } else {
+                    $display_url = $urls->url;
+                }
 
-        foreach($entities->urls as $urls) {
-            if($urls->display_url != "") {
-                $display_url = $urls->display_url;
-            } else {
-                $display_url = $urls->url;
+                $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
+
+                $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
+
+                if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
+                {
+                    $encoded = urlencode($lurl);
+                    $link = "http://google.com/gwt/n?u={$encoded}";
+                } else {
+                    $link = $lurl;
+                }
+                $atext = link_trans($display_url);
+                $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
+                $url = $urls->url;
+
+                // Replace all URLs *UNLESS* they have already been linked (for example to an image)
+                $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
+                $out = preg_replace($pattern,  $link_html, $out);
             }
-
-            $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
-
-            $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
-
-            if (setting_fetch('gwt') == 'on') // If the user wants links to go via GWT 
-            {
-                $encoded = urlencode($lurl);
-                $link = "http://google.com/gwt/n?u={$encoded}";
-            } else {
-                $link = $lurl;
-            }
-            $atext = link_trans($display_url);
-            $link_html = '<a href="' . $link . '" rel="external nofollow noreferrer">' . $atext . '</a>';
-            $url = $urls->url;
-
-            // Replace all URLs *UNLESS* they have already been linked (for example to an image)
-            $pattern = '#((?<!href\=(\'|\"))'.preg_quote($url,'#').')#i';
-            $out = preg_replace($pattern,  $link_html, $out);
         }
-        foreach($entities->hashtags as $hashtag) {
-            $text = $hashtag->text;
 
-            $pattern = '/(^|\s)([#＃]+)('. $text .')/iu';
+        if($entities->hashtags) {
+            foreach($entities->hashtags as $hashtag) {
+                $text = $hashtag->text;
 
-            $link_html = ' <a href="hash/' . $text . '" rel="external nofollow tag noreferrer" class="hashtag">#' . $text . '</a> ';
+                $pattern = '/(^|\s)([#＃]+)('. $text .')/iu';
 
-            $out = preg_replace($pattern,  $link_html, $out, 1);
+                $link_html = ' <a href="hash/' . $text . '" rel="external nofollow tag noreferrer" class="hashtag">#' . $text . '</a> ';
+
+                $out = preg_replace($pattern,  $link_html, $out, 1);
+            }
         }
     } else {  // If Entities haven't been returned (usually because of search or a bio) use Autolink
         // Create an array containing all URLs
@@ -1283,6 +1324,7 @@ function twitter_search($search_query) {
     if ($page == 0) $page = 1;
     $request = APIS_URL.'search.json?result_type=recent&q=' . urlencode($search_query).'&page='.$page.'&include_entities=true';
     $tl = twitter_process($request);
+    //var_dump($tl->results);
     $tl = twitter_standard_timeline($tl->results, 'search');
     return $tl;
 }
@@ -1439,6 +1481,10 @@ function theme_status_form($text = '', $in_reply_to_id = NULL) {
         $fixedtagspre = (!empty($fixedtagspre) && (setting_fetch('fixedtagspreo', 'no') == "yes") && ($text == '')) ? $fixedtagspre." " : NULL;
         $fixedtagspost = (!empty($fixedtagspost) && (setting_fetch('fixedtagsposto', 'no') == "yes") && ($text == '')) ? " ".$fixedtagspost : NULL;
         $text = $fixedtagspre.$text.$fixedtagspost;
+        // adding ?status=foo will automaticall add "foo" to the text area.
+        if ($_GET['status']) {
+            $text = $_GET['status'];
+        }
         $output = "<form method='post' action='update'><fieldset><legend>What's Happening?</legend><div><input name='status' value='{$text}' maxlength='140' /> <input name='in_reply_to_id' value='{$in_reply_to_id}' type='hidden' /><button type='submit'>Tweet</button>";
         if (setting_fetch('buttongeo') == 'yes') {
             $output .= '<div><span id="geo" style="display: none;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
@@ -1651,7 +1697,8 @@ function theme_user_header($user) {
 function theme_avatar($url, $name='', $force_large = false) {
     if (setting_fetch('avataro', 'yes') !== 'yes') {
     $size = $force_large ? 48 : 24;
-    $force_large || $url = str_replace('_normal.', '_mini.', $url);
+    $force_large || $urlz = str_replace('_normal.', '_mini.', $url);
+    $url = ($urlz == $url) ? str_replace('_normal', '_mini', $url) : $urlz;
   return "<img class='shead' alt='$name' src='$url' height='$size' width='$size' />";
     } else {
   return '';
@@ -1763,6 +1810,7 @@ function twitter_standard_timeline($feed, $source) {
                     ),
                     'created_at' => $status->created_at,
                     'geo' => $status->geo,
+                    'entities' => $status->entities,
                 );
             }
             return $output;
@@ -1992,12 +2040,15 @@ function twitter_is_reply($status) {
     // Use Twitter Entities to see if this contains a mention of the user
     if ($status->entities)  // If there are entities
     {
-        $entities = $status->entities;
-        foreach($entities->user_mentions as $mentions)
+        if ($status->entities->user_mentions)
         {
-            if ($mentions->screen_name == $user) 
+            $entities = $status->entities;
+            foreach($entities->user_mentions as $mentions)
             {
-                return true;
+                if ($mentions->screen_name == $user) 
+                {
+                    return true;
+                }
             }
         }
             return false;
