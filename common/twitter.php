@@ -275,7 +275,7 @@ function twitter_block_exists($query)
 {
     //http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-blocks-blocking-ids
     //Get an array of all ids the authenticated user is blocking
-    $request = API_URL.'blocks/blocking/ids.json';
+    $request = API_URL.'blocks/blocking/ids.json?stringify_ids=true';
     $blocked = (array) twitter_process($request);
     
     //bool in_array  ( mixed $needle  , array $haystack  [, bool $strict  ] )  
@@ -668,7 +668,10 @@ function twitter_get_media($status) {
 
 }
 
-function twitter_parse_tags($input, $entities = false) {
+function twitter_parse_tags($input, $entities = false, $id = false) {
+    // Filter
+    if ($id && substr($_GET["q"], 0, 6) !== "status" && (setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($input)) return "<a href='status/{$id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
+
     $out = $input;
 
     //Linebreaks.  Some clients insert \n for formatting.
@@ -1104,9 +1107,12 @@ function twitter_followers_page($query) {
 }
 
 function twitter_blockings_page($query) {
-    $request = API_URL.'blocks/blocking.json?page='.intval($_GET['page']).'&include_entities=true';
+    $request = API_URL.'blocks/blocking.json?page='.intval($_GET['page']).'&include_entities=true&stringify_ids=true';
+    $lists = twitter_process($request);
+
+    $request = API_URL.'users/lookup.json?user_id='.implode($lists, ',').'&include_entities=true';
     $tl = twitter_process($request);
-    $content = theme('blockings', $tl);
+    $content = theme('followers', $tl);
     theme('page', 'Blockings', $content);
 }
 
@@ -1300,6 +1306,12 @@ function theme_directs_form($to) {
 
 function twitter_search_page() {
     $search_query = $_GET['query'];
+
+    // Geolocation parameters
+    list($lat, $long) = explode(',', $_GET['location']);
+    $loc = $_GET['location'];
+    $radius = $_GET['radius'];
+    //echo "the lat = $lat, and long = $long, and $loc";
     $content = theme('search_form', $search_query);
     if (isset($_POST['query'])) {
         $duration = time() + (3600 * 24 * 365);
@@ -1310,7 +1322,7 @@ function twitter_search_page() {
         $search_query = $_COOKIE['search_favourite'];
     }
     if ($search_query) {
-        $tl = twitter_search($search_query);
+        $tl = twitter_search($search_query, $lat, $long, $radius);
         if ($search_query !== $_COOKIE['search_favourite']) {
             $content .= '<form action="search/bookmark" method="post"><div><input type="hidden" name="query" value="'.$search_query.'" /><button type="submit">Save as default search</button></div></form>';
         }
@@ -1319,10 +1331,24 @@ function twitter_search_page() {
     theme('page', 'Search', $content);
 }
 
-function twitter_search($search_query) {
+function twitter_search($search_query, $lat = NULL, $long = NULL, $radius = NULL) {
     $page = (int) $_GET['page'];
     if ($page == 0) $page = 1;
     $request = APIS_URL.'search.json?result_type=recent&q=' . urlencode($search_query).'&page='.$page.'&include_entities=true';
+
+    if ($lat && $long)
+    {
+        $request .= "&geocode=$lat,$long,";
+    }
+
+    if ($radius)
+    {
+        $request .="$radius";
+    } else
+    {
+        $request .="1km";
+    }
+
     $tl = twitter_process($request);
     //var_dump($tl->results);
     $tl = twitter_standard_timeline($tl->results, 'search');
@@ -1359,7 +1385,13 @@ function twitter_user_page($query) {
     // If the user has at least one tweet
     if (isset($user->status)) {
         // Fetch the timeline early, so we can try find the tweet they're replying to
-        $request = API_URL."statuses/user_timeline.json?screen_name={$screen_name}&include_rts=true&include_entities=true&page=".intval($_GET['page']);
+        if ($in_reply_to_id == 0) {
+            if ($subaction == "retweets") {
+                $request = API_URL."statuses/retweeted_by_user.json?include_entities=true&screen_name={$screen_name}&include_rts=true&page=".intval($_GET['page']);
+            } else {
+                $request = API_URL."statuses/user_timeline.json?screen_name={$screen_name}&include_rts=true&include_entities=true&page=".intval($_GET['page']);
+            }
+    }
         $tl = twitter_process($request);
         $tl = twitter_standard_timeline($tl, 'user');
     }
@@ -1411,7 +1443,9 @@ function twitter_user_page($query) {
     $content .= theme('user_header', $user);
     $content .= theme('timeline', $tl);
 
-    theme('page', "User {$screen_name}", $content);
+    $title = ($subaction == "retweets") ? "Retweeted by" : "User";
+
+    theme('page', "{$title} {$screen_name}", $content);
 }
 
 function twitter_favourites_page($query) {
@@ -1684,6 +1718,7 @@ function theme_user_header($user) {
     }
 
     $out .= " | <a href='lists/{$user->screen_name}'>" . pluralise('list', $user->listed_count, true) . "</a>";
+    $out .= " | <a href='user/{$user->screen_name}/retweets'>Retweets</a>";
 
     if ($following == true && $followed_by == true || strtolower($user->screen_name) == strtolower(user_current_username())) {
         $out .= " | <a href='directs/create/{$user->screen_name}'>Direct Message</a>";
@@ -1891,6 +1926,7 @@ function twitter_user_info($username = null) {
 }
 
 function twitter_timeline_filter($input) {
+    if(!setting_fetch('filterc')) return false;
     $filter_keywords = explode(" ",setting_fetch('filterc'));
     foreach ($filter_keywords as $filter_keyword) {
         if (stripos($input, $filter_keyword)) {
@@ -1914,7 +1950,7 @@ function theme_timeline($feed)
     // Add the hyperlinks *BEFORE* adding images
     foreach ($feed as &$status)
     {
-        $status->text = twitter_parse_tags($status->text, $status->entities);
+        $status->text = twitter_parse_tags($status->text, $status->entities, $status->id_str);
     }
     unset($status);
 
@@ -1952,15 +1988,20 @@ function theme_timeline($feed)
         {
             $date = $status->created_at;
         }
+
+        // Old Filter
+        /*
         if ((setting_fetch('filtero', 'no') == 'yes') && twitter_timeline_filter($status->text)) {
             $text = "<a href='status/{$status->id}' class='filter'><span class='texts'>[Tweet Filtered]</span></a>";
         } else {
             $text = $status->text;
             setting_fetch('hide_inline') || $media = twitter_get_media($status);
         }
-        if (setting_fetch('buttontime', 'yes') == 'yes') {
-            $link = theme('status_time_link', $status, !$status->is_direct);
-        }
+        */
+        $text = $status->text;
+        (setting_fetch('hide_inline') || (setting_fetch('filtero', 'no') == 'yes') || setting_fetch('filterc')) || $media = twitter_get_media($status);
+
+        (setting_fetch('buttontime', 'yes') == 'yes') && $link = theme('status_time_link', $status, !$status->is_direct);
         $actions = theme('action_icons', $status);
         $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
         if (setting_fetch('buttonfrom', 'yes') == 'yes') {
@@ -2071,8 +2112,13 @@ function theme_followers($feed, $hide_pagination = false) {
     $rows = array();
     if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
 
-    foreach ($feed->users->user as $user) {
+    if ($_GET["q"] == "blockings") {
+        $lists = $feed;
+    } else {
+        $lists = $feed->users->user;
+    }
 
+    foreach ($lists as $user) {
         $name = theme('full_name', $user);
         $tweets_per_day = twitter_tweets_per_day($user);
         $last_tweet = strtotime($user->status->created_at);
@@ -2107,49 +2153,6 @@ function theme_followers($feed, $hide_pagination = false) {
     $content = theme('table', array(), $rows, array('class' => 'followers'));
     if (!$hide_pagination)
     $content .= theme('list_pagination', $feed);
-    return $content;
-}
-
-function theme_blockings($feed, $hide_pagination = false) {
-    $rows = array();
-    if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
-
-    foreach ($feed as $user) {
-
-        $name = theme('full_name', $user);
-        $tweets_per_day = twitter_tweets_per_day($user);
-        $last_tweet = strtotime($user->status->created_at);
-        $content = "{$name}<br /><span class='about'>";
-        if($user->description != "")
-            $content .= "Bio: " . twitter_parse_tags($user->description) . "<br />";
-        if($user->location != "")
-            $content .= "Location: {$user->location}<br />";
-        $content .= "Info: ";
-        $content .= pluralise('tweet', $user->statuses_count, true) . ", ";
-        $content .= pluralise('friend', $user->friends_count, true) . ", ";
-        $content .= pluralise('follower', $user->followers_count, true) . ", ";
-        $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
-        $content .= "Last tweet: ";
-        if($user->protected == 'true' && $last_tweet == 0)
-            $content .= "Private";
-        else if($last_tweet == 0)
-            $content .= "Never tweeted";
-        else
-            $content .= twitter_date('l jS F Y', $last_tweet);
-        $content .= "</span>";
-
-        if (setting_fetch('avataro', 'yes') !== 'yes') {
-            $rows[] = array('data' => array(array('data' => theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), 'class' => 'avatar'),
-                array('data' => $content, 'class' => 'status shift')),
-                'class' => 'tweet');
-        } else {
-            $rows[] = array('data' => array(array('data' => $content, 'class' => 'status shift')),
-                'class' => 'tweet');
-        }
-    }
-    $content = theme('table', array(), $rows, array('class' => 'followers'));
-    if (!$hide_pagination)
-        $content .= theme('list_pagination', $feed);
     return $content;
 }
 
@@ -2219,7 +2222,7 @@ function theme_no_tweets() {
 function theme_search_results($feed) {
     $rows = array();
     foreach ($feed->results as $status) {
-        $text = twitter_parse_tags($status->text, $status->entities);
+        $text = twitter_parse_tags($status->text, $status->entities, $status->id_str);
         $link = theme('status_time_link', $status);
         $actions = theme('action_icons', $status);
 
@@ -2245,7 +2248,7 @@ function theme_search_results($feed) {
 
 function theme_search_form($query) {
     $query = stripslashes(htmlentities($query,ENT_QUOTES,"UTF-8"));
-    return "<form action='search' method='get'><div><input name='query' value=\"$query\" /><button type='submit'>Search</button></div></form>";
+    return '<form action="search" method="get"><div><input name="query" value="'. $query .'" /><button type="submit">Search</button></div></form>';
 }
 
 function theme_external_link($url, $content = null) {

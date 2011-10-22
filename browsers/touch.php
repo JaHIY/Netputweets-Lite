@@ -17,27 +17,6 @@ if (setting_fetch('avataro', 'yes') !== 'yes') {
     }
 }
 
-function touch_theme_page($title, $content) {
-  $body = theme('menu_top');
-  $body .= $content;
-  $body .= theme('google_analytics');
-  ob_start('ob_gzhandler');
-  header('Content-Type: text/html; charset=utf-8');
-        echo    '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">
-                <html xmlns="http://www.w3.org/1999/xhtml">
-            <head>
-      <meta name="viewport" content="width=device-width; initial-scale=1.0;" />
-      <title>',$title,'</title>
-      <base href="',BASE_URL,'" />
-      ',theme('css'),'
-            </head>
-            <body id="thepage">';
-        echo $body,
-            '</body>
-                </html>';
-        exit();
-}
-
 function touch_theme_menu_top() {
   $links = array();
   $main_menu_titles = array('home', 'replies', 'directs', 'search');
@@ -50,7 +29,7 @@ function touch_theme_menu_top() {
     $user = user_current_username();
     array_unshift($links['extras'], "<b><a href='user/$user'>$user</a></b>");
   }
-  array_push($links['main'], '<a href="#" onclick="return toggleMenu()">more</a>');
+  array_push($links['main'], '<a href="#" onclick="return toggleMenu()">+</a>');
   $html = '<div id="menu" class="menu">';
   $html .= theme('list', $links['main'], array('id' => 'menu-main'));
   $html .= theme('list', $links['extras'], array('id' => 'menu-extras'));

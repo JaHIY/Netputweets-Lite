@@ -12,7 +12,7 @@ function desktop_theme_status_form($text = '', $in_reply_to_id = NULL) {
         }
         $output = '<form method="post" action="update">
   <fieldset><legend>What\'s Happening?</legend>
-  <div><textarea id="status" name="status" rows="3" cols="60">'.$text.'</textarea>
+  <div><textarea id="status" name="status" rows="4" cols="60">'.$text.'</textarea>
   <div><input name="in_reply_to_id" value="'.$in_reply_to_id.'" type="hidden" /><button id="submit" type="submit">Tweet</button><span id="remaining">140</span>';
         if (setting_fetch('buttongeo') == 'yes') {
             $output .= '<span id="geo" style="display: none; float: right;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
@@ -59,7 +59,38 @@ function geoSuccess(position) {
 }
 
 function desktop_theme_search_form($query) {
-  $query = stripslashes(htmlentities($query,ENT_QUOTES,"UTF-8"));
-  return "<form action='search' method='get'><div><input name='query' id='query' value=\"$query\" /><button type='submit'>Search</button></div></form>";
+    $query = stripslashes(htmlentities($query,ENT_QUOTES,"UTF-8"));
+    return '
+<form action="search" method="get"><input name="query" value="'. $query .'" /><button type="submit">Search</button><br />
+<span id="geo" style="display: none; float: right;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /><label for="geoloc" id="lblGeo"></label>
+<select name="radius"><option value="1km">1 Km</option><option value="5km">5 Km</option><option value="10km">10 Km</option><option value="50km">50 Km</option></select></span>
+<script type="text/javascript">
+<!--
+started = false;
+chkbox = document.getElementById("geoloc");
+if (navigator.geolocation) {
+    geoStatus("Search near my location");
+    if ("'.$_COOKIE['geo'].'"=="Y") {
+        chkbox.checked = true;
+        goGeo();
+    }
+}
+function goGeo(node) {
+    if (started) return;
+    started = true;
+    geoStatus("Locating...");
+    navigator.geolocation.getCurrentPosition(geoSuccess, geoStatus , { enableHighAccuracy: true });
+}
+function geoStatus(msg) {
+    document.getElementById("geo").style.display = "inline";
+    document.getElementById("lblGeo").innerHTML = msg;
+}
+function geoSuccess(position) {
+    geoStatus("Search near my <a href=\'http://maps.google.com/m?q=" + position.coords.latitude + "," + position.coords.longitude + "\' rel=\'external nofollow noreferrer\'>location</a>");
+    chkbox.value = position.coords.latitude + "," + position.coords.longitude;
+}
+//-->
+</script>
+</form>';
 }
 ?>
