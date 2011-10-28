@@ -136,7 +136,7 @@ function theme_page($title, $content) {
         $body .= '<p>Processed in '.round($time, 4).' seconds ('.round(($time - $api_time - $services_time) / $time * 100).'% Dabr, '.round($api_time / $time * 100).'% Twitter, '.round($services_time / $time * 100).'% other services)</p>';
     }
     if ($title == 'Login') {
-        $title = NETPUTWEETS_TITLE.' - mobile Twitter Login';
+        $title = 'mobile Twitter Login';
         $meta = '<meta name="description" content="Free open source alternative to mobile Twitter, bringing you the complete Twitter experience to your phone." />';
     }
     ob_start('ob_gzhandler');
