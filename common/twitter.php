@@ -1219,7 +1219,7 @@ function twitter_retweet($query) {
 
 function twitter_replies_page() {
     $count = setting_fetch('tpp', 20);
-    $request = API_URL."statuses/mentions.json?count=$count&page=".intval($_GET['page']).'&include_entities=true';
+    $request = API_URL."statuses/mentions.json?count={$count}&page=".intval($_GET['page']).'&include_entities=true';
     $tl = twitter_process($request);
     $tl = twitter_standard_timeline($tl, 'replies');
     $content = theme('status_form');
@@ -1229,7 +1229,7 @@ function twitter_replies_page() {
 
 function twitter_retweets_page() {
     $count = setting_fetch('tpp', 20);
-    $request = API_URL."statuses/retweeted_to_me.json?count=$count&page=".intval($_GET['page']).'&include_entities=true';
+    $request = API_URL."statuses/retweeted_to_me.json?count={$count}&page=".intval($_GET['page']).'&include_entities=true';
     $tl = twitter_process($request);
     $tl = twitter_standard_timeline($tl, 'retweets');
     $content = theme('status_form');
@@ -1385,13 +1385,12 @@ function twitter_user_page($query) {
     // If the user has at least one tweet
     if (isset($user->status)) {
         // Fetch the timeline early, so we can try find the tweet they're replying to
-        if ($in_reply_to_id == 0) {
-            if ($subaction == "retweets") {
-                $request = API_URL."statuses/retweeted_by_user.json?include_entities=true&screen_name={$screen_name}&include_rts=true&page=".intval($_GET['page']);
-            } else {
-                $request = API_URL."statuses/user_timeline.json?screen_name={$screen_name}&include_rts=true&include_entities=true&page=".intval($_GET['page']);
-            }
-    }
+        if ($subaction == "retweets") {
+            $request = API_URL."statuses/retweeted_by_user.json?include_entities=true&screen_name={$screen_name}&include_rts=true&page=".intval($_GET['page']);
+        } else {
+            $request = API_URL."statuses/user_timeline.json?screen_name={$screen_name}&include_rts=true&include_entities=true&page=".intval($_GET['page']);
+        }
+
         $tl = twitter_process($request);
         $tl = twitter_standard_timeline($tl, 'user');
     }
