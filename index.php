@@ -30,8 +30,8 @@ menu_register(array(
 
 function logout_page() {
   user_logout();
-  $content = theme('logged_out');
-  theme('page', 'Logged out', $content);
+  header("Location: " . BASE_URL); /* Redirect browser */
+  exit;
 }
 
 function about_page() {
