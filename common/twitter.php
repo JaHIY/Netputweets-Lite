@@ -277,7 +277,7 @@ function twitter_block_exists($query)
     //Get an array of all ids the authenticated user is blocking
     $request = API_URL.'blocks/blocking/ids.json?stringify_ids=true';
     $blocked = (array) twitter_process($request);
-    
+
     //bool in_array  ( mixed $needle  , array $haystack  [, bool $strict  ] )  
     //If the authenticate user has blocked $query it will appear in the array
     return in_array($query,$blocked);
@@ -469,21 +469,35 @@ function line_united($str) {
 }
 
 function twitter_profile_page($query) {
-    $url = API_URL."account/update_profile.json";
     if ($_POST['name']) {
         $post_data = array(
             'name' => line_united(stripslashes($_POST['name'])),
-            'location' => line_united($_POST['location']),
-            'url' => line_united($_POST['url']),
-            'description' => line_united($_POST['description']),
+            'location' => line_united(stripslashes($_POST['location'])),
+            'url' => line_united(stripslashes($_POST['url'])),
+            'description' => line_united(stripslashes($_POST['description'])),
         );
-        $p = twitter_process($url, $post_data);
-        $user = user_current_username();
-        twitter_refresh("user/{$user}");
-    } else {
-        $p = twitter_process($url, $post_data);
-        $content = "<form method=\"post\" action=\"profile\" enctype=\"multipart/form-data\"><div>Name: <input type=\"text\" name=\"name\" id=\"name\" value=\"{$p->name}\" /> <span id=\"name-remaining\">20</span><br />Location: <input type=\"text\" name=\"location\" id=\"location\" value=\"{$p->location}\" /><span id=\"location-remaining\">30</span><br />Link: <input type=\"text\" name=\"url\" id=\"url\" value=\"{$p->url}\" /> <span id=\"url-remaining\">100</span><br />Bio: <br /><textarea name=\"description\" id=\"description\" rows=\"3\" cols=\"60\">{$p->description}</textarea><br /><button type=\"submit\">Update</button> <span id=\"description-remaining\">160</span></div></form>";
-        $content .='<script type="text/javascript">
+        $url = API_URL."account/update_profile.json";
+        $user = twitter_process($url, $post_data);
+        $content = "<h2>Profile Updated</h2>";
+    }
+
+    //Twitter API is really slow!  If there's no delay, the old profile is returned.
+    //Wait for 3 seconds before getting the user's information, which seems to be sufficient
+    sleep(3);
+
+    // retrieve profile information
+    $user = twitter_user_info(user_current_username());
+
+    $content .= theme('user_header', $user);
+
+    $content .= "<form method='post' action='profile' enctype='multipart/form-data'>
+            <div>Name: <input type='text' name='name' id='name' value='".htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')."' /> <span id='name-remaining'>20</span>
+            <br />Location: <input type='text' name='location' id='location' value='".htmlspecialchars($user->location, ENT_QUOTES, 'UTF-8')."' /><span id='location-remaining'>30</span>
+            <br />Link: <input type='text' name='url' id='url' value='".htmlspecialchars($user->url, ENT_QUOTES, 'UTF-8')."' /> <span id='url-remaining'>100</span>
+            <br />Bio: <br /><textarea name='description' id='description' rows='3' cols='60'>".htmlspecialchars($user->description, ENT_QUOTES, 'UTF-8')."</textarea>
+            <br /><button type='submit'>Update</button> <span id='description-remaining'>160</span>
+            </div></form>";
+    $content .='<script type="text/javascript">
 <!--
 function updateCount(id,number) {
 var e = id + "-remaining";
@@ -1682,8 +1696,7 @@ function theme_user_header($user) {
     //NB we can tell if the user can be sent a DM $following->relationship->target->following;
     //Would removing this link confuse users?
 
-    //Deprecated http://apiwiki.twitter.com/Twitter-REST-API-Method%3A-users%C2%A0show
-    //if ($user->following !== true) 
+    //One cannot follow, block, nor report spam oneself.
      if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
         if ($followed_by == false)
         {
@@ -1919,7 +1932,7 @@ function preg_match_one($pattern, $subject, $flags = NULL) {
 function twitter_user_info($username = null) {
     if (!$username)
         $username = user_current_username();
-    $request = API_URL."users/show.json?screen_name=$username&include_entities=true";
+    $request = API_URL."users/show.json?screen_name={$username}&include_entities=true";
     $user = twitter_process($request);
     return $user;
 }
@@ -2024,6 +2037,9 @@ function theme_timeline($feed)
             switch($status->retweet_count) {
                 case(1) : $source .= "once</a>"; break;
                 case(2) : $source .= "twice</a>"; break;
+                //Twitter are uncapping the retweet count (https://dev.twitter.com/discussions/5129) will need to correctly format large numbers
+                case(is_int($status->retweet_count)) : $source .= number_format($status->retweet_count) . " times</a>"; break;
+                //Legacy for old tweets where the retweet count is a string (usually "100+")
                 default : $source .= $status->retweet_count . " times</a>";
             }
         }
@@ -2127,9 +2143,9 @@ function theme_followers($feed, $hide_pagination = false) {
         if($user->location != "")
             $content .= "Location: {$user->location}<br />";
         $content .= "Info: ";
-        $content .= pluralise('tweet', $user->statuses_count, true) . ", ";
-        $content .= pluralise('friend', $user->friends_count, true) . ", ";
-        $content .= pluralise('follower', $user->followers_count, true) . ", ";
+        $content .= pluralise('tweet', (int)$user->statuses_count, true) . ", ";
+        $content .= pluralise('friend', (int)$user->friends_count, true) . ", ";
+        $content .= pluralise('follower', (int)$user->followers_count, true) . ", ";
         $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
         $content .= "Last tweet: ";
         if($user->protected == 'true' && $last_tweet == 0)
@@ -2172,9 +2188,9 @@ function theme_retweeters($feed, $hide_pagination = false) {
         if($user->location != "")
             $content .= "Location: {$user->location}<br />";
         $content .= "Info: ";
-        $content .= pluralise('tweet', $user->statuses_count, true) . ", ";
-        $content .= pluralise('friend', $user->friends_count, true) . ", ";
-        $content .= pluralise('follower', $user->followers_count, true) . ", ";
+        $content .= pluralise('tweet', (int)$user->statuses_count, true) . ", ";
+        $content .= pluralise('friend', (int)$user->friends_count, true) . ", ";
+        $content .= pluralise('follower', (int)$user->followers_count, true) . ", ";
         $content .= "~" . pluralise('tweet', $tweets_per_day, true) . " per day<br />";
         $content .= "</span>";
 
