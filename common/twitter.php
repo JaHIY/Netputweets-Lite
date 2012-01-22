@@ -478,7 +478,8 @@ function twitter_profile_page($query) {
         );
         $url = API_URL."account/update_profile.json";
         $user = twitter_process($url, $post_data);
-        $content = "<h2>Profile Updated</h2>";
+        $cuser = user_current_username();
+        twitter_refresh("user/{$cuser}");
     }
 
     //Twitter API is really slow!  If there's no delay, the old profile is returned.
@@ -488,9 +489,7 @@ function twitter_profile_page($query) {
     // retrieve profile information
     $user = twitter_user_info(user_current_username());
 
-    $content .= theme('user_header', $user);
-
-    $content .= "<form method='post' action='profile' enctype='multipart/form-data'>
+    $content = "<form method='post' action='profile' enctype='multipart/form-data'>
             <div>Name: <input type='text' name='name' id='name' value='".htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')."' /> <span id='name-remaining'>20</span>
             <br />Location: <input type='text' name='location' id='location' value='".htmlspecialchars($user->location, ENT_QUOTES, 'UTF-8')."' /><span id='location-remaining'>30</span>
             <br />Link: <input type='text' name='url' id='url' value='".htmlspecialchars($user->url, ENT_QUOTES, 'UTF-8')."' /> <span id='url-remaining'>100</span>
@@ -525,9 +524,7 @@ bindupdateCount("url",100);
 bindupdateCount("description",160);
 //-->
 </script>';
-    }
-    $p = twitter_process($url, $post_data);
-    return theme('page', 'Update Profile', $content);
+    theme('page', 'Update Profile', $content);
 }
 
 function twitter_process($url, $post_data = false)
