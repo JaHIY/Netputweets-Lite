@@ -644,13 +644,18 @@ function twitter_fetch($url) {
     return $response;
 }
 
+function have_http($url) {
+    $url = ((stripos($url,'http://') !== 0) && (stripos($url,'https://') !== 0)) ? 'http://'.$url : $url;
+    return $url;
+}
+
 function link_trans($url) {
     switch (setting_fetch('linktrans', 'd')) {
         case 'o':
             $atext = $url;
             break;
         case 'd':
-            $url = ((stripos($url,'http://') !== 0) && (stripos($url,'https://') !== 0)) ? 'http://'.$url : $url;
+            $url = have_http($url);
             $urlpara = parse_url($url);
             $atext = "[{$urlpara[host]}]";
             break;
@@ -700,6 +705,7 @@ function twitter_parse_tags($input, $entities = false, $id = false) {
                 }
 
                 $expanded_url = ($urls->expanded_url) ? $urls->expanded_url : $urls->url;
+                $expanded_url = have_http($expanded_url);
 
                 $lurl = (setting_fetch('longurl') == 'yes' && LONG_URL == 'ON') ? long_url($expanded_url) : $expanded_url;
 
