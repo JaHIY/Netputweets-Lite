@@ -60,7 +60,7 @@ function touch_theme_css() {
 function touch_theme_action_icon($url, $image_url, $text) {
 if ($text == 'MAP')
 {
-return "<a href='$url' target='_blank'>$text</a>";
+return "<a href='$url' rel='external nofollow noreferrer'>$text</a>";
 }
 return "<a href='$url'>$text</a>";
 }
