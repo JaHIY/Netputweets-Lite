@@ -31,7 +31,13 @@ function lists_paginated_process($url) {
 function twitter_lists_tweets($user, $list) {
     // Tweets belonging to a list
     $count = setting_fetch('ltpp', 20);
-    $url = API_URL."{$user}/lists/{$list}/statuses.json?include_entities=true";
+    // https://dev.twitter.com/docs/api/1/get/lists/statuses
+
+    // How many tweets to show
+    $perPage = setting_fetch('perPage', 20);
+
+    $url = API_URL."lists/statuses.json?slug={$list}&owner_screen_name={$user}&per_page={$perPage}&include_entities=true&include_rts=true";
+
     $page = intval($_GET['page']);
     if ($page > 0) $url .= '&page='.$page;
     $url .= '&per_page='. $count;

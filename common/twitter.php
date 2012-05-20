@@ -105,7 +105,6 @@ menu_register(array(
   ),
   'friends' => array(
     'security' => true,
-    'security' => true,
     'callback' => 'twitter_friends_page',
   ),
   'delete' => array(
@@ -534,12 +533,15 @@ function twitter_process($url, $post_data = false)
         $post_data = array();
     }
 
-    if (user_type() == 'oauth' && ( strpos($url, '/twitter.com') !== false || strpos($url, 'api.twitter.com') !== false || strpos($url, 'upload.twitter.com') !== false)) 
-    {
-        user_oauth_sign($url, $post_data);
-    } 
+    $status = $post_data['status'];
 
-    elseif (strpos($url, 'api.twitter.com') !== false && is_array($post_data)) 
+    //if (user_type() == 'oauth' && ( strpos($url, '/twitter.com') !== false || strpos($url, 'api.twitter.com') !== false || strpos($url, 'upload.twitter.com') !== false)) 
+    //{
+        user_oauth_sign($url, $post_data);
+    //} 
+
+/*
+    if (strpos($url, 'api.twitter.com') !== false && is_array($post_data)) 
     {
         // Passing $post_data as an array to twitter.com (non-oauth) causes an error :(
         $s = array();
@@ -547,6 +549,7 @@ function twitter_process($url, $post_data = false)
             $s[] = $name.'='.urlencode($value);
         $post_data = implode('&', $s);
     }
+*/
 
     $api_start = microtime(1);
     $ch = curl_init();
@@ -620,6 +623,11 @@ function twitter_process($url, $post_data = false)
     }
     */
             }
+            else if ($result == "Status is over 140 characters.") {
+                theme('error', "<h2>Status was tooooooo loooooong!</h2><p>{$rate_limit}</p><p>{$status}</p><hr>");      
+                //theme('status_form',$status);
+            }
+
             if (DEBUG_MODE == 'ON') {
                 theme('error', "<h2>An error occured while calling the Twitter API</h2><p>{$response_info['http_code']}: {$result}</p><hr /><p>$url</p>");
             } else {
@@ -1100,26 +1108,144 @@ function twitter_confirmed_page($query)
 }
 
 function twitter_friends_page($query) {
+    // Which user's friends are we looking for?
     $user = $query[1];
     if (!$user) {
         user_ensure_authenticated();
         $user = user_current_username();
     }
-    $request = API_URL."statuses/friends/{$user}.xml";
-    $tl = lists_paginated_process($request);
-    $content = theme('followers', $tl);
+
+    // How many users to show       
+    $perPage = setting_fetch('perPage', 20);
+
+    // Bug in Twitter (?) can't feth more than 100 users at a time
+    if ($perPage >= 100) {
+        $perPage = 100;
+    }
+
+    // Get all the user ID of the friends
+    $request_ids = API_URL."friends/ids.json?screen_name={$user}";
+    $json = twitter_process($request_ids);
+    $ids = $json->ids;
+
+    // Poor man's pagination to fix broken Twitter API
+    // friends/edent/30
+    if ($query[2])	{
+        $nextPage = $query[2];
+    } else {
+        $nextPage = 0;
+    }
+
+    $nextPageURL = "friends/" . $user . "/";
+    if (count($ids) < ($nextPage + $perPage)) {
+        $nextPageURL = null;
+    } else {
+        $nextPageURL .= ($nextPage + $perPage);
+    }     
+
+    // Paginate through the user IDs and build a API query
+    $user_ids = "";
+    for ($i=$nextPage;$i<($nextPage+$perPage);$i++) {
+        $user_ids .= $ids[$i] . ",";
+    }
+
+    // Twitter requests that we POST these User IDs
+    $user_id_array = array();
+    $user_id_array["user_id"] = $user_ids;
+
+    // Construct the request
+    $request = API_URL."users/lookup.xml";
+
+    // Get the XML
+    $xml = twitter_process($request, $user_id_array);
+    $tl = simplexml_load_string($xml);
+
+    // Place the users into an array
+    $sortedUsers = array();
+        
+    foreach ($tl as $user) {
+        $user_id = $user->id;
+        // $tl is *unsorted* - but $ids is *sorted*. So we place the users from $tl into a new array based on how they're sorted in $ids
+        $key = array_search($user_id, $ids);
+        $sortedUsers[$key] = $user;
+    }
+
+    // Sort the array by key so the most recent is at the top
+    ksort($sortedUsers);
+
+    // Format the output
+    $content = theme('followers', $sortedUsers, $nextPageURL);
     theme('page', 'Friends', $content);
 }
 
 function twitter_followers_page($query) {
+    // Which user's friends are we looking for?
     $user = $query[1];
     if (!$user) {
         user_ensure_authenticated();
         $user = user_current_username();
     }
-    $request = API_URL."statuses/followers/{$user}.xml";
-    $tl = lists_paginated_process($request);
-    $content = theme('followers', $tl);
+
+    // How many users to show       
+    $perPage = setting_fetch('perPage', 20);
+    if ($perPage >= 100) {
+        $perPage = 100;
+    }
+
+    // Bug in Twitter (?) can't feth more than 100 users at a time
+
+    // Get all the user ID of the friends
+    $request_ids = API_URL."followers/ids.json?screen_name={$user}";
+    $json = twitter_process($request_ids);
+    $ids = $json->ids;
+
+    // Poor man's pagination to fix broken Twitter API
+    // followers/edent/30
+    if ($query[2])	{
+        $nextPage = $query[2];
+    } else {
+        $nextPage = 0;
+    }
+
+    $nextPageURL = "followers/" . $user . "/";
+    if (count($ids) < ($nextPage + $perPage)) {
+        $nextPageURL = null;
+    } else {
+        $nextPageURL .= ($nextPage + $perPage);
+    }       
+
+    // Paginate through the user IDs and build a API query
+    $user_ids = "";
+    for ($i=$nextPage;$i<($nextPage+$perPage);$i++) {
+        $user_ids .= $ids[$i] . ",";
+    }
+
+    // Twitter requests that we POST these User IDs
+    $user_id_array = array();
+    $user_id_array["user_id"] = $user_ids;
+
+    // Construct the request
+    $request = API_URL."users/lookup.xml";
+
+    // Get the XML
+    $xml = twitter_process($request, $user_id_array);
+    $tl = simplexml_load_string($xml);
+
+    // Place the users into an array
+    $sortedUsers = array();
+        
+    foreach ($tl as $user) {
+        $user_id = $user->id;
+        // $tl is *unsorted* - but $ids is *sorted*. So we place the users from $tl into a new array based on how they're sorted in $ids
+        $key = array_search($user_id, $ids);
+        $sortedUsers[$key] = $user;
+    }
+
+    // Sort the array by key so the most recent is at the top
+    ksort($sortedUsers);
+
+    // Format the output
+    $content = theme('followers', $sortedUsers, $nextPageURL);
     theme('page', 'Followers', $content);
 }
 
@@ -1134,11 +1260,68 @@ function twitter_blockings_page($query) {
 }
 
 //  Shows every user who retweeted a specific status
-function twitter_retweeters_page($tweet) {
-    $id = $tweet[1];
-    $request = API_URL."statuses/{$id}/retweeted_by.xml";
-    $tl = lists_paginated_process($request);
-    $content = theme('retweeters', $tl);
+function twitter_retweeters_page($query) {
+ 
+    // Which tweet are we looking for?
+    $id = $query[1];
+
+    // How many users to show       
+    $perPage = setting_fetch('perPage', 20);
+
+    // Bug in Twitter (?) can't feth more than 100 users at a time
+    if ($perPage >= 100) {
+        $perPage = 100;
+    }
+
+    // Get all the user ID of the friends   
+    $request_ids = API_URL."statuses/{$id}/retweeted_by/ids.json?count=100";
+
+    $json = twitter_process($request_ids);
+
+    $ids = $json;   
+
+    // Poor man's pagination to fix broken Twitter API
+    // retweeted_by/1234567980/20
+    $nextPage = $query[2];
+    $nextPageURL = "retweeted_by/" . $id . "/";
+    if (count($ids) < $nextPage + $perPage) {
+            $nextPageURL = null;
+    } else {
+            $nextPageURL .= ($nextPage + $perPage);
+    }       
+        
+    // Paginate through the user IDs and build a API query
+    $user_ids = "";
+    for ($i=$nextPage;$i<($nextPage+$perPage);$i++) {
+        $user_ids .= $ids[$i] . ",";
+    }
+
+    // Twitter requests that we POST these User IDs
+    $user_id_array = array();
+    $user_id_array["user_id"] = $user_ids;
+
+    // Construct the request
+    $request = API_URL."users/lookup.xml";
+
+    // Get the XML
+    $xml = twitter_process($request, $user_id_array);
+    $tl = simplexml_load_string($xml);
+
+    // Place the users into an array
+    $sortedUsers = array();
+
+    foreach ($tl as $user) {
+        $user_id = $user->id;
+        // $tl is *unsorted* - but $ids is *sorted*. So we place the users from $tl into a new array based on how they're sorted in $ids
+        $key = array_search($user_id, $ids);
+        $sortedUsers[$key] = $user;
+    }
+
+    // Sort the array by key so the most recent is at the top
+    ksort($sortedUsers);
+
+    // Format the output
+    $content = theme('followers', $sortedUsers, $nextPageURL);
     theme('page', "Everyone who retweeted {$id}", $content);
 }
 
@@ -2126,17 +2309,11 @@ function twitter_is_reply($status) {
     return false;
 }
 
-function theme_followers($feed, $hide_pagination = false) {
+function theme_followers($feed, $nextPageURL) {
     $rows = array();
     if (count($feed) == 0 || $feed == '[]') return '<p>No users to display.</p>';
 
-    if ($_GET["q"] == "blockings") {
-        $lists = $feed;
-    } else {
-        $lists = $feed->users->user;
-    }
-
-    foreach ($lists as $user) {
+    foreach ($feed as $user) {
         $name = theme('full_name', $user);
         $tweets_per_day = twitter_tweets_per_day($user);
         $last_tweet = strtotime($user->status->created_at);
@@ -2169,8 +2346,8 @@ function theme_followers($feed, $hide_pagination = false) {
         }
     }
     $content = theme('table', array(), $rows, array('class' => 'followers'));
-    if (!$hide_pagination)
-    $content .= theme('list_pagination', $feed);
+    if ($nextPageURL)
+        $content .= "<a href='{$nextPageURL}'>Next</a>";
     return $content;
 }
 
