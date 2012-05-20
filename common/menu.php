@@ -122,9 +122,9 @@ function theme_menu_bottomtom($menu) {
         if (setting_fetch('friends') == 'yes') {
             $links[] = "<a href='friends'>Friends</a>";
         }
-        if (setting_fetch('blockings') == 'yes') {
+        /*if (setting_fetch('blockings') == 'yes') {
             $links[] = "<a href='blockings'>Blockings</a>";
-        }
+        }*/
         if (setting_fetch('trends') == 'yes') {
             $links[] = "<a href='trends'>Trends</a>";
         }

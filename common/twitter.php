@@ -117,11 +117,11 @@ menu_register(array(
     'security' => true,
     'callback' => 'twitter_deleteDM_page',
   ),
-  'blockings' => array(
+/*  'blockings' => array(
     'security' => true,
     'security' => true,
     'callback' => 'twitter_blockings_page',
-  ),
+  ),*/
   'retweet' => array(
     'hidden' => true,
     'security' => true,
@@ -624,7 +624,7 @@ function twitter_process($url, $post_data = false)
     */
             }
             else if ($result == "Status is over 140 characters.") {
-                theme('error', "<h2>Status was tooooooo loooooong!</h2><p>{$rate_limit}</p><p>{$status}</p><hr>");      
+                theme('error', "<h2>Status was tooooooo loooooong!</h2><p>{$rate_limit}</p><p>{$status}</p><hr />");      
                 //theme('status_form',$status);
             }
 
@@ -1233,7 +1233,7 @@ function twitter_followers_page($query) {
 
     // Place the users into an array
     $sortedUsers = array();
-        
+
     foreach ($tl as $user) {
         $user_id = $user->id;
         // $tl is *unsorted* - but $ids is *sorted*. So we place the users from $tl into a new array based on how they're sorted in $ids
@@ -1249,6 +1249,7 @@ function twitter_followers_page($query) {
     theme('page', 'Followers', $content);
 }
 
+/*
 function twitter_blockings_page($query) {
     $request = API_URL.'blocks/blocking.json?page='.intval($_GET['page']).'&include_entities=true&stringify_ids=true';
     $lists = twitter_process($request);
@@ -1258,6 +1259,7 @@ function twitter_blockings_page($query) {
     $content = theme('followers', $tl);
     theme('page', 'Blockings', $content);
 }
+*/
 
 //  Shows every user who retweeted a specific status
 function twitter_retweeters_page($query) {
