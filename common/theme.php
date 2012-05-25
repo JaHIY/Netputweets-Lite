@@ -133,7 +133,7 @@ function theme_page($title, $content) {
     if (DEBUG_MODE == 'ON') {
         global $dabr_start, $api_time, $services_time, $rate_limit;
         $time = microtime(1) - $dabr_start;
-        $body .= '<p>Processed in '.round($time, 4).' seconds ('.round(($time - $api_time - $services_time) / $time * 100).'% Dabr, '.round($api_time / $time * 100).'% Twitter, '.round($services_time / $time * 100).'% other services)</p>';
+        $body .= '<p>Processed in '.round($time, 4).' seconds ('.round(($time - $api_time - $services_time) / $time * 100).'% Dabr, '.round($api_time / $time * 100).'% Twitter, '.round($services_time / $time * 100).'% other services). '.$rate_limit.'.</p>';
     }
     if ($title == 'Login') {
         $title = 'mobile Twitter Login';

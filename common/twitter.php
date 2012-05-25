@@ -427,7 +427,7 @@ function twitter_media_page($query) {
     Image <input type='file' name='image' /><br />
     Message (optional):<br />
     <textarea name='message' rows='3' cols='60' id='message'>" . $status . "</textarea><br />
-    <button type='submit'>Send</button><span id='remaining'>120</span>";
+    <button type='submit'>Send</button><span id='remaining'>119</span>";
     $content .= '<span id="geo" style="display: none; float: right;"><input onclick="goGeo()" type="checkbox" id="geoloc" name="location" /> <label for="geoloc" id="lblGeo"></label></span>
   <script type="text/javascript">
 <!--
@@ -457,7 +457,7 @@ function geoSuccess(position) {
 //-->
 </script>
 </form>';
-    $content .= js_counter("message", "120");
+    $content .= js_counter("message", "119");
 
     return theme('page', 'Picture Upload', $content);
 }
@@ -481,15 +481,58 @@ function twitter_profile_page($query) {
         twitter_refresh("user/{$cuser}");
     }
 
+    // http://api.twitter.com/1/account/update_profile_image.format 
+    if ($_FILES['image']['tmp_name']){      
+        require 'tmhOAuth.php';
+
+        list($oauth_token, $oauth_token_secret) = explode('|', $GLOBALS['user']['password']);
+
+        $tmhOAuth = new tmhOAuth(array(
+            'consumer_key'    => OAUTH_CONSUMER_KEY,
+            'consumer_secret' => OAUTH_CONSUMER_SECRET,
+            'user_token'      => $oauth_token,
+            'user_secret'     => $oauth_token_secret,
+        ));
+
+        // note the type and filename are set here as well
+        $params = array(
+            'image' => "@{$_FILES['image']['tmp_name']};type={$_FILES['image']['type']};filename={$_FILES['image']['name']}",
+        );
+
+        $code = $tmhOAuth->request('POST', 
+            $tmhOAuth->url("1/account/update_profile_image"),
+            $params,
+            true, // use auth
+            true // multipart
+        );
+
+
+        if ($code == 200) {
+            $content = "<h2>Avatar Updated</h2>";                   
+        } else {
+            $content = "Damn! Something went wrong. Sorry :-("  
+                ."<br /> code=" . $code
+                ."<br /> status="       . $status
+                ."<br /> image="        . $image
+                //."<br /> response=<pre>"
+                //. print_r($tmhOAuth->response['response'], TRUE)
+                . "</pre><br /> info=<pre>"
+                . print_r($tmhOAuth->response['info'], TRUE)
+                . "</pre><br /> code=<pre>"
+                . print_r($tmhOAuth->response['code'], TRUE) . "</pre>";
+        }
+    }
+
     //Twitter API is really slow!  If there's no delay, the old profile is returned.
     //Wait for 3 seconds before getting the user's information, which seems to be sufficient
-    sleep(3);
+    sleep(5);
 
     // retrieve profile information
     $user = twitter_user_info(user_current_username());
 
     $content = "<form method='post' action='profile' enctype='multipart/form-data'>
             <div>Name: <input type='text' name='name' id='name' value='".htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')."' /> <span id='name-remaining'>20</span>
+            <br />Avatar: <img src='".theme_get_avatar($user)."' /> <input type='file' name='image' />
             <br />Location: <input type='text' name='location' id='location' value='".htmlspecialchars($user->location, ENT_QUOTES, 'UTF-8')."' /><span id='location-remaining'>30</span>
             <br />Link: <input type='text' name='url' id='url' value='".htmlspecialchars($user->url, ENT_QUOTES, 'UTF-8')."' /> <span id='url-remaining'>100</span>
             <br />Bio: <br /><textarea name='description' id='description' rows='3' cols='60'>".htmlspecialchars($user->description, ENT_QUOTES, 'UTF-8')."</textarea>
@@ -566,9 +609,9 @@ function twitter_process($url, $post_data = false)
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:'));
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_HEADER, FALSE);
+    curl_setopt($ch, CURLOPT_HEADER, TRUE);
     curl_setopt($ch, CURLINFO_HEADER_OUT, TRUE);
-    curl_setopt($ch, CURLOPT_VERBOSE, true);
+    curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
 
     $response = curl_exec($ch);
     $response_info = curl_getinfo($ch);
@@ -578,8 +621,34 @@ function twitter_process($url, $post_data = false)
 
     global $api_time;
     global $rate_limit;
-    //Doesn't bloody work. No idea why!
-    $rate_limit = $response_info['X-RateLimit-Limit'];
+
+    // Split that headers and the body
+    list($headers, $body) = explode("\n\n", $response, 2);
+
+    // Place the headers into an array
+    $headers = explode("\n", $headers);
+    $headers_array;
+    foreach ($headers as $header) {
+        list($key, $value) = explode(':', $header, 2);
+        $headers_array[$key] = $value;
+    }
+        
+    // Not ever request is rate limited
+    if ($headers_array['X-RateLimit-Limit']) {
+        $current_time = time();
+        $ratelimit_time = $headers_array['X-RateLimit-Reset'];
+
+        $time_until_reset = $ratelimit_time - $current_time;
+
+        $minutes_until_reset = round($time_until_reset / 60);
+
+        $currentdate = strtotime("now");
+
+        $rate_limit = "Rate Limit: " . $headers_array['X-RateLimit-Remaining'] . " / " . $headers_array['X-RateLimit-Limit'] . " for the next $minutes_until_reset minutes";
+    }
+
+    // The body of the request is at the end of the headers
+    $body = end($headers);
 
     $api_time += microtime(1) - $api_start;
 
@@ -587,12 +656,12 @@ function twitter_process($url, $post_data = false)
     {
         case 200:
         case 201:
-            $json = json_decode($response);
+            $json = json_decode($body);
             if ($json)
             {
                 return $json;
             }
-            return $response;
+            return $body;
         case 401:
             user_logout();
             if (DEBUG_MODE == 'ON') {
@@ -610,8 +679,8 @@ function twitter_process($url, $post_data = false)
       */
             theme('error', '<h2>Twitter timed out</h2><p>Dabr gave up on waiting for Twitter to respond. They\'re probably overloaded right now, try again in a minute. <br />'. $result . ' </p>');
         default:
-            $result = json_decode($response);
-            $result = $result->error ? $result->error : $response;
+            $result = json_decode($body);
+            $result = $result->error ? $result->error : $body;
             if (strlen($result) > 500) 
             {
                 $result = 'Something broke on Twitter\'s end.';
@@ -624,7 +693,7 @@ function twitter_process($url, $post_data = false)
     */
             }
             else if ($result == "Status is over 140 characters.") {
-                theme('error', "<h2>Status was tooooooo loooooong!</h2><p>{$rate_limit}</p><p>{$status}</p><hr />");      
+                theme('error', "<h2>Status was tooooooo loooooong!</h2><p>{$status}</p><hr />");      
                 //theme('status_form',$status);
             }
 
@@ -1541,18 +1610,18 @@ function twitter_search($search_query, $lat = NULL, $long = NULL, $radius = NULL
     if ($lat && $long)
     {
         $request .= "&geocode=$lat,$long,";
-    }
 
-    if ($radius)
-    {
-        $request .="$radius";
-    } else
-    {
-        $request .="1km";
+        if ($radius)
+        {
+            $request .="$radius";
+        } else
+        {
+            $request .="1km";
+        }
+
     }
 
     $tl = twitter_process($request);
-    //var_dump($tl->results);
     $tl = twitter_standard_timeline($tl->results, 'search');
     return $tl;
 }
@@ -2046,6 +2115,9 @@ function twitter_standard_timeline($feed, $source) {
                     'created_at' => $status->created_at,
                     'geo' => $status->geo,
                     'entities' => $status->entities,
+                    'in_reply_to_status_id' => $status->in_reply_to_status_id,
+                    'in_reply_to_status_id_str' => $status->in_reply_to_status_id_str,
+                    'in_reply_to_screen_name' => $status->to_user,
                 );
             }
             return $output;
