@@ -532,7 +532,7 @@ function twitter_profile_page($query) {
 
     $content = "<form method='post' action='profile' enctype='multipart/form-data'>
             <div>Name: <input type='text' name='name' id='name' value='".htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')."' /> <span id='name-remaining'>20</span>
-            <br />Avatar: <img src='".theme_get_avatar($user)."' /> <input type='file' name='image' />
+            <br />Avatar: <img src='".theme_get_avatar($user)."' height='48' width='48' /> <input type='file' name='image' />
             <br />Location: <input type='text' name='location' id='location' value='".htmlspecialchars($user->location, ENT_QUOTES, 'UTF-8')."' /><span id='location-remaining'>30</span>
             <br />Link: <input type='text' name='url' id='url' value='".htmlspecialchars($user->url, ENT_QUOTES, 'UTF-8')."' /> <span id='url-remaining'>100</span>
             <br />Bio: <br /><textarea name='description' id='description' rows='3' cols='60'>".htmlspecialchars($user->description, ENT_QUOTES, 'UTF-8')."</textarea>
