@@ -20,7 +20,7 @@ function embedly_embed_thumbnails(&$feed) {
                 '#ts1\.in\/(\d+)#i'                       => 'http://ts1.in/mini/%s',
                 '#moby\.to\/\?([\w\d]+)#i'                => 'http://moby.to/%s:square',
                 '#mobypicture\.com\/\?([\w\d]+)#i'        => 'http://mobypicture.com/?%s:square',
-                '#twic\.li\/([\w\d]{2,7})#'               => 'http://twic.li/e%s',
+                '#twic\.li\/photo\/([\w]+)#i'             => 'http://twic.li/userimg/thumb_%s.jpg',
                 '#tweetphoto\.com\/(\d+)#'                => 'http://api.plixi.com/api/tpapi.svc/imagefromurl?url=http://tweetphoto.com/%s',
                 '#plixi\.com\/p\/(\d+)#'                  => 'http://api.plixi.com/api/tpapi.svc/imagefromurl?url=http://plixi.com/p/%s&size=small',
                 '#phz\.in\/([\d\w]+)#'                    => 'http://api.phreadz.com/thumb/%s?t=code',
@@ -63,7 +63,7 @@ function embedly_embed_thumbnails(&$feed) {
                                 {
                                     foreach ($matches[1] as $key => $match) 
                                     {
-                                        $html = theme('external_link', $urls->expanded_url, "<img src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
+                                        $html = theme('external_link', $urls->expanded_url, "<img src=\"" . IMAGE_PROXY_URL . "x50/" . sprintf($thumbnail_url, $match) . "\" />");
 
                                         $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
                                     
@@ -89,7 +89,7 @@ function embedly_embed_thumbnails(&$feed) {
                         {
                             foreach ($matches[1] as $key => $match) 
                             {
-                                $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . IMAGE_PROXY_URL . "x50/200/" . sprintf($thumbnail_url, $match) . "\" />");
+                                $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . IMAGE_PROXY_URL . "x50/" . sprintf($thumbnail_url, $match) . "\" />");
 
                                 $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
 
@@ -117,7 +117,7 @@ function embedly_embed_thumbnails(&$feed) {
     // Put the thumbnails into the $feed
     foreach ($justUrls as $index => $url) {
         if ($thumb = $oembeds[$index]->thumbnail_url) {
-            $html = theme('external_link', urldecode($url), "<img alt='' src='" . IMAGE_PROXY_URL . "x50/200/" . $thumb . "' />");
+            $html = theme('external_link', urldecode($url), "<img alt='' src='" . IMAGE_PROXY_URL . "x50/" . $thumb . "' />");
             foreach ($matched_urls[$url] as $statusId) {
                 $feed[$statusId]->text = $html . '<br />' . $feed[$statusId]->text;
             }

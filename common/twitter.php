@@ -5,157 +5,157 @@ require 'Embedly.php';
 date_default_timezone_set('Asia/Shanghai');
 
 menu_register(array(
-  '' => array(
-    'callback' => 'twitter_home_page',
-    'accesskey' => '0',
-  ),
-  'status' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_status_page',
-  ),
-  'update' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_update',
-  ),
-  'retweets' => array(
-    'security' => true,
-    'callback' => 'twitter_retweets_page',
-    'accesskey' => '2',
-    'title' => 'Retweets',
-  ),
-  'twitter-retweet' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_retweet',
-  ),
-  'replies' => array(
-    'security' => true,
-    'callback' => 'twitter_replies_page',
-    'accesskey' => '1',
-  ),
-  'favourite' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_mark_favourite_page',
-  ),
-  'unfavourite' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_mark_favourite_page',
-  ),
-  'directs' => array(
-    'security' => true,
-    'callback' => 'twitter_directs_page',
-    'accesskey' => '3',
-  ),
-  'search' => array(
-    'security' => true,
-    'callback' => 'twitter_search_page',
-    'accesskey' => '4',
-  ),
-  'user' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_user_page',
-  ),
-  'follow' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_follow_page',
-  ),
-  'unfollow' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_follow_page',
-  ),
-  'confirm' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_confirmation_page',
-  ),
-  'confirmed' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_confirmed_page',
-  ),
-  'block' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_block_page',
-  ),
-  'unblock' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_block_page',
-  ),
-  'spam' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_spam_page',
-  ),
-  'favourites' => array(
-    'security' => true,
-    'callback' =>  'twitter_favourites_page',
-  ),
-  'followers' => array(
-    'security' => true,
-    'callback' => 'twitter_followers_page',
-  ),
-  'friends' => array(
-    'security' => true,
-    'callback' => 'twitter_friends_page',
-  ),
-  'delete' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_delete_page',
-  ),
-  'deleteDM' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_deleteDM_page',
-  ),
+    '' => array(
+        'callback' => 'twitter_home_page',
+        'accesskey' => '0',
+    ),
+    'status' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_status_page',
+    ),
+    'update' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_update',
+    ),
+    'retweets' => array(
+        'security' => true,
+        'callback' => 'twitter_retweets_page',
+        'accesskey' => '2',
+        'title' => 'Retweets',
+    ),
+    'twitter-retweet' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_retweet',
+    ),
+    'replies' => array(
+        'security' => true,
+        'callback' => 'twitter_replies_page',
+        'accesskey' => '1',
+    ),
+    'favourite' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_mark_favourite_page',
+    ),
+    'unfavourite' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_mark_favourite_page',
+    ),
+    'directs' => array(
+        'security' => true,
+        'callback' => 'twitter_directs_page',
+        'accesskey' => '3',
+    ),
+    'search' => array(
+        'security' => true,
+        'callback' => 'twitter_search_page',
+        'accesskey' => '4',
+    ),
+    'user' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_user_page',
+    ),
+    'follow' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_follow_page',
+    ),
+    'unfollow' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_follow_page',
+    ),
+    'confirm' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_confirmation_page',
+    ),
+    'confirmed' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_confirmed_page',
+    ),
+    'block' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_block_page',
+    ),
+    'unblock' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_block_page',
+    ),
+    'spam' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_spam_page',
+    ),
+    'favourites' => array(
+        'security' => true,
+        'callback' =>  'twitter_favourites_page',
+    ),
+    'followers' => array(
+        'security' => true,
+        'callback' => 'twitter_followers_page',
+    ),
+    'friends' => array(
+        'security' => true,
+        'callback' => 'twitter_friends_page',
+    ),
+    'delete' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_delete_page',
+    ),
+    'deleteDM' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_deleteDM_page',
+    ),
 /*  'blockings' => array(
-    'security' => true,
-    'security' => true,
-    'callback' => 'twitter_blockings_page',
-  ),*/
-  'retweet' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_retweet_page',
-  ),
-  'hash' => array(
-    'security' => true,
-    'hidden' => true,
-    'callback' => 'twitter_hashtag_page',
-  ),
-  'picture' => array(
-    'security' => true,
-    'callback' => 'twitter_media_page',
-  ),
+        'security' => true,
+        'security' => true,
+        'callback' => 'twitter_blockings_page',
+    ),*/
+    'retweet' => array(
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_retweet_page',
+    ),
+    'hash' => array(
+        'security' => true,
+        'hidden' => true,
+        'callback' => 'twitter_hashtag_page',
+    ),
+    'picture' => array(
+        'security' => true,
+        'callback' => 'twitter_media_page',
+    ),
     'trends' => array(
-    'security' => true,
-    'callback' => 'twitter_trends_page',
-  ),
+        'security' => true,
+        'callback' => 'twitter_trends_page',
+    ),
     'retweeted' => array(
-    'security' => true,
-    'callback' => 'twitter_retweeted_page',
-    'accesskey' => '5',
-    'title' => 'Retweeted',
-  ),
+        'security' => true,
+        'callback' => 'twitter_retweeted_page',
+        'accesskey' => '5',
+        'title' => 'Retweeted',
+    ),
     'retweeted_by' => array(
-    'security' => true,
-    'hidden' => true,
-    'callback' => 'twitter_retweeters_page',
-  ),
+        'security' => true,
+        'hidden' => true,
+        'callback' => 'twitter_retweeters_page',
+    ),
     'profile' => array(
-    'hidden' => true,
-    'security' => true,
-    'callback' => 'twitter_profile_page',
-  )
+        'hidden' => true,
+        'security' => true,
+        'callback' => 'twitter_profile_page',
+    )
 ));
 
 // Patch in multibyte support
@@ -451,7 +451,7 @@ function geoStatus(msg) {
     document.getElementById("lblGeo").innerHTML = msg;
 }
 function geoSuccess(position) {
-    geoStatus("Tweet my <a href=\'http://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
+    geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
     chkbox.value = position.coords.latitude + "," + position.coords.longitude;
 }
 //-->
@@ -609,7 +609,7 @@ function twitter_process($url, $post_data = false)
     curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:'));
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-    curl_setopt($ch, CURLOPT_HEADER, TRUE);
+    curl_setopt($ch, CURLOPT_HEADER, FALSE);
     curl_setopt($ch, CURLINFO_HEADER_OUT, TRUE);
     curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
 
@@ -621,7 +621,7 @@ function twitter_process($url, $post_data = false)
 
     global $api_time;
     global $rate_limit;
-
+/*
     // Split that headers and the body
     list($headers, $body) = explode("\n\n", $response, 2);
 
@@ -649,7 +649,9 @@ function twitter_process($url, $post_data = false)
 
     // The body of the request is at the end of the headers
     $body = end($headers);
+*/
 
+    $body = $response;
     $api_time += microtime(1) - $api_start;
 
     switch( intval( $response_info['http_code'] ) ) 
@@ -746,17 +748,27 @@ function link_trans($url) {
 // http://dev.twitter.com/pages/tweet_entities
 function twitter_get_media($status) {
     if($status->entities->media) {
-        if ($_SERVER['HTTPS'] == "on") {
-            $image = $status->entities->media[0]->media_url_https;
-        } else {
-            $image = $status->entities->media[0]->media_url;
+        $media_html = '';
+
+        foreach($status->entities->media as $media) {
+
+            if ($_SERVER['HTTPS'] == "on") {
+                $image = $media->media_url_https;
+            } else {
+                $image = $media->media_url;
+            }
+
+            $link = $media->url;
+
+            $width = $media->sizes->thumb->w;
+            $height = $media->sizes->thumb->h;
+
+            $media_html .= "<a href=\"{$image}\" rel=\"external nofollow noreferrer\" >";
+            $media_html .=  "<img src=\"{$image}:thumb\" width=\"{$width}\" height=\"{$height}\" >";
+            $media_html .= "</a>";
         }
 
-        $media_html = "<a href=\"" . $image . "\" rel='external nofollow noreferrer'>";
-        $media_html .=  "<img alt=\"\" src=\"" . $image . ":thumb\" width=\"" . $status->entities->media[0]->sizes->thumb->w . "\" height=\"" . $status->entities->media[0]->sizes->thumb->h . "\" />";
-        $media_html .= "</a><br />";
-
-        return $media_html;
+            return $media_html . "<br/>";
     }
 
 }
@@ -1814,7 +1826,7 @@ function geoStatus(msg) {
     document.getElementById("lblGeo").innerHTML = msg;
 }
 function geoSuccess(position) {
-    geoStatus("Tweet my <a href=\'http://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
+    geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
     chkbox.value = position.coords.latitude + "," + position.coords.longitude;
 }
 //-->
@@ -1919,7 +1931,7 @@ function theme_user_header($user) {
     }
     $out .= "Bio: {$bio}<br />";
     $out .= (empty($user->url)) ? "Link: No link to display.<br />" : "Link: {$link}<br />";
-    $out .= (empty($user->location)) ? "Location: No location to display.<br />" : "Location: <a href=\"http://maps.google.com/m?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
+    $out .= (empty($user->location)) ? "Location: No location to display.<br />" : "Location: <a href=\"https://maps.google.com/maps?q={$cleanLocation}\" rel=\"external nofollow noreferrer\">{$user->location}</a><br />";
     $out .= "Joined: {$date_joined} (~" . pluralise('tweet', $tweets_per_day, true) . " per day)";
     if (strtolower($user->screen_name) !== strtolower(user_current_username())) {
         $out .= "<br /><strong>{$user->screen_name} ";
@@ -2637,7 +2649,7 @@ function theme_action_icons($status) {
             $latlong = $geo->coordinates;
             $lat = $latlong[0];
             $long = $latlong[1];
-            $actions[] = theme('action_icon', "http://maps.google.com/m?q={$lat},{$long}", 'images/map.png', 'MAP');
+            $actions[] = theme('action_icon', "https://maps.google.com/maps?q={$lat},{$long}", 'images/map.png', 'MAP');
         }
     }
 
