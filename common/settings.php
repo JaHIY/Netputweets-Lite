@@ -213,8 +213,8 @@ function settings_page($args) {
         'mobile' => 'Normal phone',
         'touch' => 'Touch Screen',
         'desktop' => 'PC/Laptop',
-        //'text' => 'Text only',
-        //'worksafe' => 'Work Safe',
+        'text' => 'Text only',
+        'worksafe' => 'Work Safe',
         'bigtouch' => 'Touch Screen Big',
     );
 

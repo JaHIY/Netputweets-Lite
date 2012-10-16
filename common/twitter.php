@@ -954,7 +954,7 @@ function twitter_status_page($query) {
         $content = theme('status', $status);
 
         if(strcmp($query[2],'')==0){
-            $status = twitter_process($request);
+            $status->id = $status->id_str;
             $threadrequest = API_URL."related_results/show/{$id}.json?include_entities=true";
             $threadstatus = twitter_process($threadrequest);
             if ($threadstatus && $threadstatus[0] && $threadstatus[0]->results) {
@@ -963,6 +963,7 @@ function twitter_status_page($query) {
                 foreach ($array as $key=>$value) {
                     $tl[] = $value->value;
                     if ($value->value->in_reply_to_status_id_str && $value->value->in_reply_to_status_id_str == $id) {
+                        $status->user = $status->from;
                         $tl[] = $status;
                     }
                 }
