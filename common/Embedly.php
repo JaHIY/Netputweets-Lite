@@ -63,7 +63,7 @@ function embedly_embed_thumbnails(&$feed) {
                                 {
                                     foreach ($matches[1] as $key => $match) 
                                     {
-                                        $html = theme('external_link', $urls->expanded_url, "<img src=\"" . IMAGE_PROXY_URL . "x50/" . sprintf($thumbnail_url, $match) . "\" />");
+                                        $html = theme('external_link', $urls->expanded_url, "<img  src=\"" . BASE_URL . "simpleproxy.php?url=" . sprintf($thumbnail_url, $match) . "\" />");
 
                                         $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
                                     
@@ -89,8 +89,7 @@ function embedly_embed_thumbnails(&$feed) {
                         {
                             foreach ($matches[1] as $key => $match) 
                             {
-                                $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . IMAGE_PROXY_URL . "x50/" . sprintf($thumbnail_url, $match) . "\" />");
-
+                                $html = theme('external_link', $urls->url, "<img alt=\"\" src=\"" . BASE_URL . "simpleproxy.php?url=" . sprintf($thumbnail_url, $match) . "\" />");
                                 $feed[$status->id]->text = $html . '<br />' . $feed[$status->id]->text;
 
                             }
@@ -117,7 +116,7 @@ function embedly_embed_thumbnails(&$feed) {
     // Put the thumbnails into the $feed
     foreach ($justUrls as $index => $url) {
         if ($thumb = $oembeds[$index]->thumbnail_url) {
-            $html = theme('external_link', urldecode($url), "<img alt='' src='" . IMAGE_PROXY_URL . "x50/" . $thumb . "' />");
+            $html = theme('external_link', urldecode($url), "<img alt='' src='" .BASE_URL. "simpleproxy.php?url=" . IMAGE_PROXY_URL . "x50/". $thumb . "' />");
             foreach ($matched_urls[$url] as $statusId) {
                 $feed[$statusId]->text = $html . '<br />' . $feed[$statusId]->text;
             }
