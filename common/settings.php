@@ -9,8 +9,8 @@ Assembled in theme_css()
 
 $GLOBALS['colour_schemes'] = array(
     0 => 'Pretty In Pink|c06,fcd,623,c8a,fee,fde,ffa,dd9,c06,fee,fee',
-    1 => '#red|d12,F7F7F7,111,555,fff,FFD3D3,ffa,dd9,c12,fff,fff',
-    2 => 'Facebook Blue|3B5998,F7F7F7,000,555,D8DFEA,EEE,FFA,DD9,3B5998,FFF,FFF',
+    1 => '#Facebook Blue|3B5998,F7F7F7,000,555,D8DFEA,EEE,FFA,DD9,3B5998,FFF,FFF',
+    2 => 'red|d12,F7F7F7,111,555,fff,FFD3D3,ffa,dd9,c12,fff,fff',
     3 => 'Digu Orange|b50,ddd,111,555,fff,eee,ffa,dd9,e81,c40,fff',
     4 => 'Fanfou Blue|13819F,E7F2F5,333,555,fff,E7F2F5,FFA,DD9,00CCFF,333,333',
     5 => 'Colorful|535F74,D1D0B4,000,555,FFEDED,FFD3D3,FFA,DD9,D33D3E,FFF,FFF',
