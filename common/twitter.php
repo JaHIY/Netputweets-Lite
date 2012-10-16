@@ -451,8 +451,11 @@ function geoStatus(msg) {
     document.getElementById("lblGeo").innerHTML = msg;
 }
 function geoSuccess(position) {
-    geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
-    chkbox.value = position.coords.latitude + "," + position.coords.longitude;
+      if(typeof position.address !== "undefined")
+          geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>" + " (" + position.address.country + position.address.region + "省" + position.address.city + "市，accuracy: " + position.coords.accuracy + "m)");
+      else
+          geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>" + " (accuracy: " + position.coords.accuracy + "m)");
+      chkbox.value = position.coords.latitude + "," + position.coords.longitude;
 }
 //-->
 </script>
