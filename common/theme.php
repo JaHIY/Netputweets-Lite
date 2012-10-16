@@ -201,43 +201,47 @@ function theme_colours() {
 function theme_css() {
     $c = theme('colours');
     $t = "<style type='text/css'>
-a{color:#{$c->links};}table{border-collapse:collapse;}
-form{margin:.3em;}td{vertical-align:top;padding:0.3em;}
-img{border:0;}
-body{background:#{$c->bodybg};color:#{$c->bodyt};margin:0;font:90% sans-serif;}
-.odd{background:#{$c->odd}}
-.even{background:#{$c->even}}
-.reply{background:#{$c->replyodd}}
-.reply.even{background: #{$c->replyeven}}
-.menu{color:#{$c->menut};background:#{$c->menubg};padding: 2px;}
-.menu a{color:#{$c->menua};text-decoration: none;}
-.tweet,.features{padding:5px}
-.date{padding:5px;font-size:0.8em;font-weight:bold;color:#{$c->small}}
-.about,.time{font-size:0.75em;color:#{$c->small}}
-.avatar{display:block; height:26px; width:26px; left:0.3em; margin:0; overflow:hidden; position:absolute;}
-.status{display:block;word-wrap:break-word;}
-.list span{margin:0 4px 0 0;}";
+      a{color:#{$c->links};}
+      table{border-collapse:collapse;}
+      form{margin:.3em;}
+      td{vertical-align:top;padding:0.3em;}
+      img{border:0;}
+      body{background:#{$c->bodybg};color:#{$c->bodyt};font:90% sans-serif;margin:0;}
+      .odd{background:#{$c->odd}}
+      .even{background:#{$c->even}}
+      .reply{background:#{$c->replyodd}}
+      .reply.even{background: #{$c->replyeven}}
+      .menu{color:#{$c->menut};background:#{$c->menubg};padding: 2px;}
+      .menu a{color:#{$c->menua};text-decoration: none;}
+      .tweet,.features{padding:5px}
+      .date{padding:5px;font-size:0.8em;font-weight:bold;color:#{$c->small}}
+      .about,.time{font-size:0.75em;color:#{$c->small}}
+      .avatar{display:block; left:0.3em; margin:0; overflow:hidden; position:absolute;}
+      .status{display:block;word-wrap:break-word;}
+      .list span{margin:0 4px 0 0;}";
     if (setting_fetch('avataro', 'yes') !== 'yes') {
-        $t .= ".shift{margin-left:30px;min-height:24px;}";
+      $t .= ".shift{margin-left:30px;min-height:24px;}";
     } else {
-        $t .= ".shift{margin-left:10px;min-height:24px;}";
+      $t .= ".shift{margin-left:10px;min-height:24px;}";
     }
-    $t .= ".from{font-size:0.75em;color:#{$c->small};font-family:serif;}
-.from a{color:#{$c->small};}
-.textb{font-weight:bold;}
-.texts,.texts a{color:#{$c->small};font-size:small;}
-textarea{width:90%; max-width: 400px;overflow-x:hidden;}
-.translate{padding:5px;margin:15px;border:thin solid;}
-input#query{width:100%;max-width:300px;}
-#about{margin:0.5em;padding:0.1em 1em;}
-fieldset{border:1px dashed #{$c->bodyt};}
-hr{border:1px dotted#{$c->bodyt};}
-.filter{text-decoration:none;}
-.sinput{width:40px;}
-.linput{width:120px;}
-.minput{width:20px;}
-.ninput{width:90px;}
-</style>";
+    $t .= "
+      .from{font-size:0.75em;color:#{$c->small};font-family:serif;}
+      .from a{color:#{$c->small};}
+      .textb{font-weight:bold;}
+      .texts,.texts a{color:#{$c->small};font-size:small;}
+      textarea{width:90%; max-width: 400px;overflow-x:hidden;}
+      .translate{padding:5px;margin:15px;border:thin solid;}
+      input#query{width:100%;max-width:300px;}
+      legend {padding:5px;}
+      #about{margin:0.5em;padding:0.1em 1em;}
+      #fieldset{border:1px dashed #{$c->bodyt};}
+      hr{border:1px dotted#{$c->bodyt};}
+      .filter{text-decoration:none;}
+      .sinput{width:40px;}
+      .linput{width:120px;}
+      .minput{width:20px;}
+      .ninput{width:90px;}
+      </style>";
     return $t;
 }
 
