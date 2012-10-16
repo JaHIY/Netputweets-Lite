@@ -396,7 +396,7 @@ function twitter_media_page($query) {
             $text = $json->text;
 
             $content = "<p>Upload success. Image posted to Twitter.</p>
-    <p><img src=\"" . IMAGE_PROXY_URL . "x50/" . $image_url . "\" alt='' /></p>
+    <p><img src=\"" . BASE_URL . "simpleproxy.php?url=" . IMAGE_PROXY_URL . "x50/" . $image_url . "\" alt='' /></p>
     <p>". twitter_parse_tags($text) . "</p>";
 
         } else {
