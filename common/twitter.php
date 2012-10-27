@@ -966,7 +966,7 @@ function twitter_status_page($query) {
                 foreach ($array as $key=>$value) {
                     $tl[] = $value->value;
                 }
-                $tl = twitter_standard_timeline($tl, 'status');
+                $tl = twitter_standard_timeline($tl, 'status', true);
                 $content .= '<p>Related results...</p>'.theme('timeline', $tl);
             } elseif (!$status->user->protected) {
                 $thread = twitter_thread_timeline($id);
@@ -2067,7 +2067,7 @@ function twitter_date($format, $timestamp = null) {
     return gmdate($format, $timestamp + $offset);
 }
 
-function twitter_standard_timeline($feed, $source) {
+function twitter_standard_timeline($feed, $source, $needsort = false) {
     $output = array();
     if (!is_array($feed) && $source != 'thread') return $output;
 
@@ -2107,7 +2107,8 @@ function twitter_standard_timeline($feed, $source) {
                 unset($new->user);
                 $output[(string) $new->id] = $new;
             }
-            krsort ($output);
+            if ($needsort)
+                krsort ($output);
             return $output;
 
         case 'search':
