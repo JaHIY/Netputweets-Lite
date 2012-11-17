@@ -296,7 +296,7 @@ function settings_page($args) {
     $content .= '<label><input type="checkbox" name="buttongeo" value="yes" '. (setting_fetch('buttongeo') == 'yes' ? ' checked="checked" ' : '') .' /> GEO [Geolocation]</label><br />';
     $content .= '<label><input type="checkbox" name="buttontime" value="yes" '. (setting_fetch('buttontime', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status Times</label>';
     $content .= '<label><input type="checkbox" name="buttonfrom" value="yes" '. (setting_fetch('buttonfrom', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Status From</label></p><hr />';
-    $content .= '<p><label><input type="checkbox" name="avataro" value="yes" '. (setting_fetch('avataro', 'yes') == 'yes' ? ' checked="checked" ' : '') .' /> Disable Avatar</label></p><hr />';
+    $content .= '<p><label><input type="checkbox" name="avataro" value="yes" '. (setting_fetch('avataro', 'no') == 'yes' ? ' checked="checked" ' : '') .' /> Disable Avatar</label></p><hr />';
     $content .= '<p><label>Tweets per page (20-200): <input type="text" id="tpp" name="tpp" value="'.setting_fetch('tpp', 20).'" size="3" maxlength="3" class="minput" /></label></p><hr />';
 
     $content .= '<p><label>List tweets per page (20-200): <input type="text" id="ltpp" name="ltpp" value="'.setting_fetch('ltpp', 20).'" size="3" maxlength="3" class="minput" /></label></p><hr />';

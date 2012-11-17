@@ -1917,7 +1917,7 @@ function theme_user_header($user) {
     $tweets_per_day = twitter_tweets_per_day($user, 1);
     $bio = twitter_parse_tags($user->description);
     $username = user_current_username();
-   $out = "<div class='profile'>";
+    $out = "<div class='profile'>";
     if (setting_fetch('avataro', 'yes') !== 'yes') {
         $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), $name)."</span>";
     }
@@ -2289,7 +2289,9 @@ function theme_timeline($feed)
 
         (setting_fetch('buttontime', 'yes') == 'yes') && $link = theme('status_time_link', $status, !$status->is_direct);
         $actions = theme('action_icons', $status);
-        $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+        if (setting_fetch('avataro', 'yes') !== 'yes') {
+            $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+        }
         if (setting_fetch('buttonfrom', 'yes') == 'yes') {
             if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
                 $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
