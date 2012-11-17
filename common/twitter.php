@@ -396,7 +396,7 @@ function twitter_media_page($query) {
             $text = $json->text;
 
             $content = "<p>Upload success. Image posted to Twitter.</p>
-    <p><img src=\"" . IMAGE_PROXY_URL . "x50/" . $image_url . "\" alt='' /></p>
+    <p><img src=\"" . BASE_URL . "simpleproxy.php?url=" . IMAGE_PROXY_URL . "x50/" . $image_url . "\" alt='' /></p>
     <p>". twitter_parse_tags($text) . "</p>";
 
         } else {
@@ -954,19 +954,19 @@ function twitter_status_page($query) {
         $content = theme('status', $status);
 
         if(strcmp($query[2],'')==0){
-            $status = twitter_process($request);
+            $status->id = $status->id_str;
             $threadrequest = API_URL."related_results/show/{$id}.json?include_entities=true";
             $threadstatus = twitter_process($threadrequest);
             if ($threadstatus && $threadstatus[0] && $threadstatus[0]->results) {
                 $array = array_reverse($threadstatus[0]->results);
                 $tl = array();
+                //$status = twitter_process($request);
+                $status->user = $status->from;
+                $tl[] = $status;
                 foreach ($array as $key=>$value) {
                     $tl[] = $value->value;
-                    if ($value->value->in_reply_to_status_id_str && $value->value->in_reply_to_status_id_str == $id) {
-                        $tl[] = $status;
-                    }
                 }
-                $tl = twitter_standard_timeline($tl, 'status');
+                $tl = twitter_standard_timeline($tl, 'status', true);
                 $content .= '<p>Related results...</p>'.theme('timeline', $tl);
             } elseif (!$status->user->protected) {
                 $thread = twitter_thread_timeline($id);
@@ -1917,7 +1917,7 @@ function theme_user_header($user) {
     $tweets_per_day = twitter_tweets_per_day($user, 1);
     $bio = twitter_parse_tags($user->description);
     $username = user_current_username();
-   $out = "<div class='profile'>";
+    $out = "<div class='profile'>";
     if (setting_fetch('avataro', 'yes') !== 'yes') {
         $out .= "<span class='avatar'>".theme('external_link', $full_avatar, theme('avatar', theme_get_avatar($user), htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8')), $name)."</span>";
     }
@@ -2067,7 +2067,7 @@ function twitter_date($format, $timestamp = null) {
     return gmdate($format, $timestamp + $offset);
 }
 
-function twitter_standard_timeline($feed, $source) {
+function twitter_standard_timeline($feed, $source, $needsort = false) {
     $output = array();
     if (!is_array($feed) && $source != 'thread') return $output;
 
@@ -2107,6 +2107,8 @@ function twitter_standard_timeline($feed, $source) {
                 unset($new->user);
                 $output[(string) $new->id] = $new;
             }
+            if ($needsort)
+                krsort ($output);
             return $output;
 
         case 'search':
@@ -2287,7 +2289,9 @@ function theme_timeline($feed)
 
         (setting_fetch('buttontime', 'yes') == 'yes') && $link = theme('status_time_link', $status, !$status->is_direct);
         $actions = theme('action_icons', $status);
-        $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+        if (setting_fetch('avataro', 'yes') !== 'yes') {
+            $avatar = theme('avatar', theme_get_avatar($status->from), htmlspecialchars($status->from->name, ENT_QUOTES, 'UTF-8'));
+        }
         if (setting_fetch('buttonfrom', 'yes') == 'yes') {
             if ((substr($_GET['q'],0,4) == 'user') || (setting_fetch('browser') == 'touch') || (setting_fetch('browser') == 'desktop') || (setting_fetch('browser') == 'bigtouch')) {
                 $source = $status->source ? " via ".str_replace('rel="nofollow"', 'rel="external nofollow noreferrer"', preg_replace('/&(?![a-z][a-z0-9]*;|#[0-9]+;|#x[0-9a-f]+;)/i', '&amp;', $status->source)) : ''; //need to replace & in links with &amps and force new window on links
