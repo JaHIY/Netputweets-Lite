@@ -451,8 +451,11 @@ function geoStatus(msg) {
     document.getElementById("lblGeo").innerHTML = msg;
 }
 function geoSuccess(position) {
-    geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>");
-    chkbox.value = position.coords.latitude + "," + position.coords.longitude;
+      if(typeof position.address !== "undefined")
+          geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>" + " (" + position.address.country + position.address.region + "省" + position.address.city + "市，accuracy: " + position.coords.accuracy + "m)");
+      else
+          geoStatus("Tweet my <a href=\'https://maps.google.com/maps?q=loc:" + position.coords.latitude + "," + position.coords.longitude + "\' target=\'blank\'>location</a>" + " (accuracy: " + position.coords.accuracy + "m)");
+      chkbox.value = position.coords.latitude + "," + position.coords.longitude;
 }
 //-->
 </script>
@@ -2309,7 +2312,7 @@ function theme_timeline($feed)
             $source .= " <a href='status/{$status->in_reply_to_status_id_str}'>in reply to {$status->in_reply_to_screen_name}</a>";
         }
         if ($status->retweet_count)     {
-            $source .= " <a href='retweeted_by/{$status->id}'>retweeted ";
+            $source .= "<br /> <a href='retweeted_by/{$status->id}'>retweeted ";
             switch($status->retweet_count) {
                 case(1) : $source .= "once</a>"; break;
                 case(2) : $source .= "twice</a>"; break;
@@ -2323,7 +2326,14 @@ function theme_timeline($feed)
             $retweeted_by = $status->retweeted_by->user->screen_name;
             $source .= "<br /><a href='retweeted_by/{$status->id}'>retweeted</a> by <a href='user/{$retweeted_by}'>{$retweeted_by}</a>";
         }
-        $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text}<br />$media<span class='texts'>$source</span>";
+        $html = "<span class='textb'><a href='user/{$status->from->screen_name}'>{$status->from->screen_name}</a></span> $actions <span class='texts'>$link</span><br />{$text}";
+        if ($media){
+            $html .= "<br />{$media}";
+        }
+        if (setting_fetch('browser') == 'desktop') {
+            $html .= "<br />";
+        }
+        $html .= "<span class='texts'>$source</span>";
         unset($row);
         $class = 'status';
 
